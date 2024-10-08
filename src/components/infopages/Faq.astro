@@ -11,7 +11,7 @@
             Frequently asked questions
           </p>
           <p class="text-base mt-4 text-zinc-500">
-            Answers to commonly asked questions about our platform
+            Answers to commonly asked questions about TabTab
           </p>
         </div>
       </div>
@@ -33,7 +33,7 @@
             @click="setActiveAccordion(id)"
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
-            <span>How does end-to-end encryption work?</span>
+            <span>How does TabTab work?</span>
             <svg
               class="w-5 h-5 duration-300 ease-out text-accent-500 -rotate-[45deg]"
               :class="{ '-rotate-[45deg]': activeAccordion==id }"
@@ -50,11 +50,9 @@
           </button>
           <div x-show="activeAccordion==id" x-collapse="">
             <div class="p-4 pt-2 text-zinc-500">
-              End-to-end encryption ensures that only the sender and recipient
-              can access the content of a message. The information is encrypted
-              on the sender's device and can only be decrypted by the intended
-              recipient, preventing any intermediaries, including the platform
-              provider, from accessing the data.
+              TabTab is a native macOS app built with AppKit and Swift. It uses Apple's Accessbility framework to control your Mac
+              and see details about which windows and tabs you're using. The tab management feature is tricky because of how
+              different apps conform to the accessibility framework.
             </div>
           </div>
         </div>
@@ -68,7 +66,7 @@
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span
-              >Can I access my encrypted data if I forget my encryption key?</span
+              >Is a subscription required?</span
             >
             <svg
               class="w-5 h-5 duration-300 ease-out text-accent-500"
@@ -90,11 +88,7 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              No, forgetting or losing your encryption key means that your
-              encrypted data cannot be accessed. This is a crucial security
-              measure to ensure that even if someone gains unauthorized access
-              to your account, they won't be able to decrypt and view your
-              messages or files.
+              No. TabTab is a one-time purchase. You can use the app forever without any subscription fees and have free access to future updates.
             </div>
           </div>
         </div>
@@ -108,8 +102,7 @@
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span
-              >Are there any limitations to the self-destructing messages
-              feature?</span
+              >Is a Windows version available?</span
             >
             <svg
               class="w-5 h-5 duration-300 ease-out text-accent-500"
@@ -131,12 +124,7 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              Self-destructing messages are designed to automatically delete
-              themselves after a specific period or upon being read by the
-              recipient. However, it's important to note that the feature only
-              removes the message from the devices involved in the conversation.
-              Recipients may take screenshots or use other means to capture the
-              content, which is beyond the platform's control.
+              Windows support is not in the current roadmap.
             </div>
           </div>
         </div>
@@ -150,8 +138,7 @@
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span
-              >What happens if I enable two-factor authentication and lose my
-              device?</span
+              >How is my data handled?</span
             >
             <svg
               class="w-5 h-5 duration-300 ease-out text-accent-500"
@@ -173,12 +160,7 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              Losing your device doesn't automatically compromise your account's
-              security. It's recommended to contact our support team as soon as
-              possible to disable the two-factor authentication on your lost
-              device and set up the authentication on your new device. This
-              process will help protect your account from unauthorized access
-              while ensuring you can regain access to it.
+              Privacy is essential for an app that is part of your daily workflow. TabTab does not collect any user data. Everything is processed locally on your Mac and never sent out of your device.
             </div>
           </div>
         </div>
@@ -192,7 +174,7 @@
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span
-              >Is my personal information shared or sold to third parties?</span
+              >Can I share a subscription on multiple devices?</span
             >
             <svg
               class="w-5 h-5 duration-300 ease-out text-accent-500"
@@ -214,10 +196,7 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              No, we strictly adhere to a privacy-centric approach. Your
-              personal information is never shared, sold, or monetized. We
-              prioritize your privacy and ensure that your data remains
-              confidential and only accessible to you.
+              No. You can only use the license on one device at a time.
             </div>
           </div>
         </div>
@@ -230,7 +209,7 @@
             @click="setActiveAccordion(id)"
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
-            <span>Can I use this platform on multiple devices?</span>
+            <span>Which apps are supported for the tab management feature?</span>
             <svg
               class="w-5 h-5 duration-300 ease-out text-accent-500"
               :class="{ '-rotate-[45deg]': activeAccordion==id }"
@@ -251,10 +230,34 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              Yes, you can access our platform on multiple devices. Your
-              encrypted data remains synced across all devices, allowing you to
-              seamlessly communicate and access your files and messages from
-              anywhere.
+              Currently, TabTab supports reading the tabs from the following apps:
+              
+              <h4 class="font-semibold mt-2">Browsers:</h4>
+              <ul class="list-disc list-inside ml-4">
+                <li>Safari</li>
+                <li>Google Chrome</li>
+                <li>Firefox</li>
+              </ul>
+
+              <h4 class="font-semibold mt-2">Code Editors:</h4>
+              <ul class="list-disc list-inside ml-4">
+                <li>Visual Studio Code</li>
+                <li>Xcode</li>
+                <li>Cursor</li>
+              </ul>
+
+              <h4 class="font-semibold mt-2">Design:</h4>
+              <ul class="list-disc list-inside ml-4">
+                <li>Figma</li>
+              </ul>
+
+              <h4 class="font-semibold mt-2">Utilities:</h4>
+              <ul class="list-disc list-inside ml-4">
+                <li>Preview</li>
+                <li>Finder</li>
+                <li>Terminal</li>
+                <li>Warp</li>
+              </ul>
             </div>
           </div>
         </div>
