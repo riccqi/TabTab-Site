@@ -209,7 +209,7 @@
             @click="setActiveAccordion(id)"
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
-            <span>Which apps are supported for the tab management feature?</span>
+            <span>Which apps support the tab management feature?</span>
             <svg
               class="w-5 h-5 duration-300 ease-out text-accent-500"
               :class="{ '-rotate-[45deg]': activeAccordion==id }"
@@ -230,8 +230,7 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              Currently, TabTab supports reading the tabs from the following apps:
-              
+              Currently, TabTab supports tab management for the following apps:
               <h4 class="font-semibold mt-2">Browsers:</h4>
               <ul class="list-disc list-inside ml-4">
                 <li>Safari</li>
@@ -257,11 +256,12 @@
                 <li>Finder</li>
                 <li>Terminal</li>
                 <li>Warp</li>
+                <li>Fork</li>
               </ul>
             </div>
           </div>
         </div>
-        <div
+        <!-- <div
           x-data="{ id: $id('accordion') }"
           :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
           class="cursor-pointer group text-zinc-600 hover:text-accent-500"
@@ -300,8 +300,8 @@
               storage capacity.
             </div>
           </div>
-        </div>
-        <div
+        </div> -->
+        <!-- <div
           x-data="{ id: $id('accordion') }"
           :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
           class="cursor-pointer group text-zinc-600 hover:text-accent-500"
@@ -338,7 +338,7 @@
               over your data.
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
