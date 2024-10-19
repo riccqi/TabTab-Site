@@ -8,7 +8,12 @@
          <svg class="h-4" viewBox="0 0 78 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M55.5 0H77.5L58.5 32H36.5L55.5 0Z" class="ccustom" fill="#283CFF"></path> <path d="M35.5 0H51.5L32.5 32H16.5L35.5 0Z" class="ccompli1" fill="#5263FF"></path> <path d="M19.5 0H31.5L12.5 32H0.5L19.5 0Z" class="ccompli2" fill="#808CFF"></path> </svg>
           <span class="font-bold font-display">AstroSaas</span>
         </a> -->
-        <object type="image/svg+xml" data="/tabtab-full.svg" class="w-28">TabTab Icon</object>
+        <div class="relative w-28">
+          <object type="image/svg+xml" data="/tabtab-full.svg" class="w-full">TabTab Icon</object>
+          <a href="/" class="absolute inset-0">
+            <span class="sr-only">Home</span>
+          </a>
+        </div>
         <button
           @click="open = !open"
           class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-black focus:outline-none focus:text-black md:hidden">
