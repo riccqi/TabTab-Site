@@ -236,7 +236,7 @@
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span
-              >Is a Windows version available?</span
+              >Some of the tabs are not showing up?</span
             >
             <svg
               class="w-5 h-5 duration-300 ease-out text-accent-500"
@@ -258,50 +258,47 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              Windows support is not on the roadmap.
+              Sorry you're experiencing this issue. If you're not on the latest version of the supported apps, do try updating them.
+              If the issue persists, please reach out to <strong><em>riccqi [at] pm [dot] me</em></strong> with the problematic app and its version number.
             </div>
           </div>
         </div>
-        <!-- <div
-          x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
+        <div
+        x-data="{ id: $id('accordion') }"
+        :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
+        class="cursor-pointer group text-zinc-600 hover:text-accent-500"
+      >
+        <button
+          @click="setActiveAccordion(id)"
+          class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
         >
-          <button
-            @click="setActiveAccordion(id)"
-            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
+          <span
+            >Is a Windows version available?</span
           >
-            <span
-              >Are there any storage limitations for files and documents?</span
-            >
-            <svg
-              class="w-5 h-5 duration-300 ease-out text-accent-500"
-              :class="{ '-rotate-[45deg]': activeAccordion==id }"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 6v12m6-6H6"></path></svg
-            >
-          </button>
-          <div
-            x-show="activeAccordion==id"
-            x-collapse=""
-            style="display: none;"
+          <svg
+            class="w-5 h-5 duration-300 ease-out text-accent-500"
+            :class="{ '-rotate-[45deg]': activeAccordion==id }"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            ><path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 6v12m6-6H6"></path></svg
           >
-            <div class="p-4 pt-2 text-zinc-500">
-              Our platform provides ample storage space for your files and
-              documents. However, there may be storage limitations based on the
-              pricing plan you choose. We offer flexible plans to suit your
-              needs and provide options to upgrade if you require additional
-              storage capacity.
-            </div>
+        </button>
+        <div
+          x-show="activeAccordion==id"
+          x-collapse=""
+          style="display: none;"
+        >
+          <div class="p-4 pt-2 text-zinc-500">
+            Windows support is not on the roadmap.
           </div>
-        </div> -->
+        </div>
+      </div>
         <!-- <div
           x-data="{ id: $id('accordion') }"
           :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
