@@ -1,319 +1,92 @@
+<style>
+  @keyframes emojiPulse {
+    0% { opacity: 0.7; transform: scale(0.95); }
+    50% { opacity: 0.9; transform: scale(1.1); }
+    100% { opacity: 0.7; transform: scale(0.95); }
+  }
+
+  .animate-emoji {
+    animation: emojiPulse 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+</style>
+
 <section>
   <div
-    class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-24"
+    class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-12"
   >
-    <!-- <div>
+    <div>
       <p
-        class="text-4xl tracking-tight font-medium text-black md:text-5xl font-display"
+        class="text-center text-4xl tracking-tight font-medium text-black md:text-5xl font-display"
       >
-        Reviews from <span class="sm:block"
-          >happy users</span
-        >
+        Reviews from early users<span class="sm:block"></span>
       </p>
-    </div> -->
+    </div>
     <ul
       class="mt-12 lg:mt-24 grid grid-cols-1 gap-4 lg:gap-8 sm:grid-cols-2 lg:grid-cols-3"
     >
       <li>
-        <div class="h-full flex flex-col justify-between">
+        <div class="h-full flex flex-col justify-between relative">
           <div>
-            <!-- <div class="flex gap-x-1"> -->
-              <!-- <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-            </div> -->
-            <p class="lg:text-sm text-gray-500 mt-4">
+            <p class="lg:text-lg text-xl text-gray-500 mt-4">
               This is a fantastic product, this is how Apple should have built the tab navigation!
             </p>
           </div>
           <footer class="mt-8">
-            <p class="lg:text-sm text-gray-500 font-display">Pablo Sanzo</p>
+            <p class="lg:text-sm text-gray-500 font-display">
+              <a href="https://www.linkedin.com/in/pablosanzo/" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Pablo Sanzo <span>↗</span></a>
+            </p>
             <img class="h-8 mt-4" src="/assets/brands/Attentive.svg" alt="" />
           </footer>
+          <span class="absolute bottom-2 right-2 text-6xl opacity-90 animate-emoji">🚀</span>
         </div>
       </li>
       <li>
-        <div class="h-full flex flex-col justify-between">
+        <div class="h-full flex flex-col justify-between relative">
           <div>
-            <div class="flex gap-x-1">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-            </div>
-            <p class="lg:text-sm text-gray-500 mt-4">
-              "Its totally replaced my need to use other window switching tools."
+            <p class="lg:text-lg text-xl text-gray-500 mt-4">
+              "I'm so glad I paid for TabTab. This is smooth, visually pleasing, developer is more than reactive and listens to suggestions."
             </p>
           </div>
           <footer class="mt-8">
-            <p class="lg:text-sm text-gray-500 font-display">John D</p>
+            <p class="lg:text-sm text-gray-500 font-display">Eden</p>
             <img class="h-8 mt-4" src="/assets/brands/Coinbase.svg" alt="" />
           </footer>
+          <span class="absolute bottom-2 right-2 text-6xl opacity-90 animate-emoji">✨</span>
         </div>
       </li>
       <li>
-        <div class="h-full flex flex-col justify-between">
+        <div class="h-full flex flex-col justify-between relative">
           <div>
-            <div class="flex gap-x-1">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star fill-accent-500 stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="icon icon-tabler icon-tabler-star stroke-accent-500"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="none"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                ></path>
-              </svg>
-            </div>
-            <p class="lg:text-sm text-gray-500 mt-4">
-              "I like it. It's simple and it works."
+            <p class="lg:text-lg text-xl text-gray-500 mt-4">
+              "我用几个月了，这玩意tm好用炸了，推荐所有人下载！"
             </p>
           </div>
           <footer class="mt-8">
-            <p class="lg:text-sm text-gray-500 font-display">Emily R</p>
+            <p class="lg:text-sm text-gray-500 font-display">
+              <a href="https://x.com/Megabits_mzq/status/1859111667294236854" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Megabits <span>↗</span></a>
+            </p>
             <img class="h-8 mt-4" src="/assets/brands/Figma.svg" alt="" />
           </footer>
+          <span class="absolute bottom-2 right-2 text-6xl opacity-70 animate-emoji">💫</span>
+        </div>
+      </li>
+      <li>
+        <div class="h-full flex flex-col justify-between relative">
+          <div>
+            <p class="lg:text-lg text-xl text-gray-500 mt-4">
+              "Powerful mac productivity tool you must try."
+            </p>
+          </div>
+          <footer class="mt-8">
+            <p class="lg:text-sm text-gray-500 font-display">
+              <a href="https://x.com/roczhang9673/status/1859564698846495230" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Roc Zhang <span>↗</span></a>
+            </p>
+            <img class="h-8 mt-4" src="/assets/brands/Figma.svg" alt="" />
+          </footer>
+          <span class="absolute bottom-2 right-2 text-6xl opacity-70 animate-emoji">🎯</span>
         </div>
       </li>
     </ul>
   </div>
 </section>
+
