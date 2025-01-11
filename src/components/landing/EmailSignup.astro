@@ -1,0 +1,53 @@
+---
+---
+
+<section class="py-16 sm:py-20">
+  <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:max-w-7xl lg:px-8">
+    <div class="flex flex-col items-center gap-8 lg:gap-12">
+      <div class="flex flex-col items-center gap-4 lg:gap-6">
+        <img src="/tabtab.svg" alt="TabTab Logo" class="h-16 w-auto mb-2" />
+        <h2 class="text-3xl font-medium tracking-tight sm:text-4xl">Stay Updated</h2>
+        <p class="text-primary-950/70 dark:text-primary-200/70 text-lg text-center max-w-lg mb-2">
+          Receive updates about TabTab and be the first to know about new features.
+          There won't be any spam, promise.
+        </p>
+        <form
+          action="https://formspree.io/f/xyzzldkr"
+          method="POST"
+          class="flex flex-col items-center gap-4 w-full max-w-sm"
+        >
+          <div class="flex flex-col gap-3 w-full">
+            <div class="w-full">
+              <label for="name" class="sr-only">Name</label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                required
+                placeholder="Name"
+                class="block w-4/5 mx-auto rounded-lg border bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+              />
+            </div>
+            <div class="w-full">
+              <label for="email" class="sr-only">Email</label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                required
+                placeholder="Email"
+                class="block w-4/5 mx-auto rounded-lg border bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="w-4/5 mx-auto items-center justify-center h-12 font-medium rounded-full focus-visible:outline-black focus:outline-none inline-flex bg-black border-2 border-black text-white duration-200 focus-visible:ring-black hover:bg-white hover:border-black hover:text-black px-4 py-3 text-center mt-4"
+          >
+            Join
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section> 
