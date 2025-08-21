@@ -83,7 +83,7 @@
           </button>
           <div x-show="activeAccordion==id" x-collapse="">
             <div class="p-4 pt-2 text-zinc-500">
-              Yes, the app is free to download and use. However, to unlock unlimited history, you can upgrade to the Pro tier.
+              Yes, you can download and use the app for free. However, to unlock unlimited tracking of windows and tabs, you can upgrade to the Pro tier.
             </div>
           </div>
         </div>
@@ -124,7 +124,39 @@
             </div>
           </div>
         </div>
-        
+
+        <div
+          x-data="{ id: $id('accordion') }"
+          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
+        >
+          <button
+            @click="setActiveAccordion(id)"
+            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
+          >
+            <span>What is the refund policy?</span>
+            <svg
+              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
+              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
+              :class="{ '-rotate-[45deg]': activeAccordion==id }"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v12m6-6H6"></path></svg
+            >
+          </button>
+          <div x-show="activeAccordion==id" x-collapse="">
+            <div class="p-4 pt-2 text-zinc-500">
+              We stand by our app with a 7-day money-back guarantee. If you’re not satisfied for any reason, do reach out at riccqi [at] pm [dot] me within 7 days of purchase and we’ll issue a full refund — no questions asked. 
+            </div>
+          </div>
+        </div>
+
         <div
           x-data="{ id: $id('accordion') }"
           :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
@@ -195,7 +227,7 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              Yes. A license key can be used on up to 2 devices.
+              Yes! A license key can be used on up to 2 devices.
             </div>
           </div>
         </div>

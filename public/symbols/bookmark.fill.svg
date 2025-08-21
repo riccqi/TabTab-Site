@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Generator: Apple Native CoreSVG 326-->
+<!DOCTYPE svg
+PUBLIC "-//W3C//DTD SVG 1.1//EN"
+       "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 65.8203 104.932">
+ <g>
+  <rect height="104.932" opacity="0" width="65.8203" x="0" y="0"/>
+  <path d="M5.17578 104.736C7.56836 104.736 8.98438 103.369 13.3789 99.1211L32.4707 80.3223C32.7148 80.0781 33.1543 80.0781 33.3496 80.3223L52.4414 99.1211C56.8359 103.369 58.252 104.736 60.6445 104.736C63.916 104.736 65.8203 102.588 65.8203 98.7793L65.8203 14.0137C65.8203 4.73633 61.1816 0 52.002 0L13.8184 0C4.63867 0 0 4.73633 0 14.0137L0 98.7793C0 102.588 1.9043 104.736 5.17578 104.736Z" fill="white" fill-opacity="0.85"/>
+ </g>
+</svg>
