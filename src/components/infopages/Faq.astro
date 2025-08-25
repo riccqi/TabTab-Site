@@ -154,7 +154,7 @@
           </button>
           <div x-show="activeAccordion==id" x-collapse="">
             <div class="p-4 pt-2 text-zinc-500">
-              We stand by our app with a 7-day money-back guarantee. If you’re not satisfied for any reason, do reach out at <strong><em>riccqi [at] pm [dot] me</em></strong> within 7 days of purchase and we’ll issue a full refund — no questions asked. 
+              We stand by our app with a 7-day money-back guarantee. If you’re not satisfied for any reason, do reach out at <strong><em><span class="protected-email">riccqi@pm.me</span></em></strong> within 7 days of purchase and we’ll issue a full refund — no questions asked. 
             </div>
           </div>
         </div>
@@ -334,7 +334,7 @@
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              Sorry to hear that! Please email <strong><em>riccqi [at] pm [dot] me</em></strong> with:
+              Sorry to hear that! Please email <strong><em><span class="protected-email">riccqi@pm.me</span></em></strong> with:
               <ul class="list-disc list-inside mt-2">
                 <li>The app name and version</li>
                 <li>The macOS version</li>
@@ -368,7 +368,7 @@
           </button>
           <div x-show="activeAccordion==id" x-collapse="" style="display: none;">
             <div class="p-4 pt-2 text-zinc-500">
-              If you are a student, please email me at <strong><em>riccqi [at] pm [dot] me</em></strong> using your edu email for a discount.
+              If you are a student, please email me at <strong><em><span class="protected-email">riccqi@pm.me</span></em></strong> using your edu email for a discount.
             </div>
           </div>
         </div>
@@ -406,3 +406,25 @@
     </div>
   </div>
 </section>
+
+<script>
+  // Email protection against spam bots
+  function createEmailLink() {
+    const user = 'riccqi';
+    const domain = 'pm.me';
+    const email = user + '@' + domain;
+    return 'mailto:' + email;
+  }
+
+  // Make email clickable with protection
+  document.addEventListener('DOMContentLoaded', function() {
+    const emailElements = document.querySelectorAll('.protected-email');
+    emailElements.forEach(element => {
+      element.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = createEmailLink();
+      });
+      (element as HTMLElement).style.cursor = 'pointer';
+    });
+  });
+</script>
