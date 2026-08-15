@@ -28,13 +28,18 @@
       <div
         class="lg:col-span-3 aspect-[5/3] w-full max-w-[800px] mx-auto rounded-xl overflow-hidden shadow-xl">
         <video
+          data-lazy-video
           autoplay
           loop
           muted
           playsinline
+          preload="none"
+          poster="/window-poster.webp"
+          width="1280"
+          height="768"
           class="w-full h-full object-cover"
         >
-          <source src="/window.mp4" type="video/mp4">
+          <source data-src="/window.mp4" type="video/mp4">
           Your browser does not support the video tag.
         </video>
       </div>
@@ -70,13 +75,18 @@
       <div
         class="lg:col-span-3 aspect-[5/3] w-full max-w-[800px] mx-auto rounded-xl overflow-hidden shadow-xl">
         <video
+          data-lazy-video
           autoplay
           loop
           muted
           playsinline
+          preload="none"
+          poster="/tabs-poster.webp"
+          width="1280"
+          height="768"
           class="w-full h-full object-cover"
         >
-          <source src="/tabs.mp4" type="video/mp4">
+          <source data-src="/tabs.mp4" type="video/mp4">
           Your browser does not support the video tag.
         </video>
       </div>
@@ -196,16 +206,54 @@
       <div
         class="lg:col-span-3 aspect-[5/3] w-full max-w-[800px] mx-auto rounded-xl overflow-hidden shadow-xl">
         <video
+          data-lazy-video
           autoplay
           loop
           muted
           playsinline
+          preload="none"
+          poster="/search-poster.webp"
+          width="1280"
+          height="768"
           class="w-full h-full object-cover"
         >
-          <source src="/search.mp4" type="video/mp4">
+          <source data-src="/search.mp4" type="video/mp4">
           Your browser does not support the video tag.
         </video>
       </div>
     </div>
   </div>
 </section>
+
+<script>
+  const lazyVideos = document.querySelectorAll<HTMLVideoElement>("video[data-lazy-video]");
+
+  const loadVideo = (video: HTMLVideoElement) => {
+    if (video.dataset.loaded === "true") return;
+
+    video.querySelectorAll<HTMLSourceElement>("source[data-src]").forEach((source) => {
+      if (source.dataset.src) source.src = source.dataset.src;
+    });
+
+    video.dataset.loaded = "true";
+    video.load();
+    void video.play().catch(() => {});
+  };
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          loadVideo(entry.target as HTMLVideoElement);
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: "300px 0px" },
+    );
+
+    lazyVideos.forEach((video) => observer.observe(video));
+  } else {
+    lazyVideos.forEach(loadVideo);
+  }
+</script>

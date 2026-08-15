@@ -50,7 +50,7 @@ const softwareApplicationData = {
 const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? softwareApplicationData : undefined);
 ---
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-P4PBQ5VZC9"></script>
+<script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-P4PBQ5VZC9"></script>
 <script>
   // @ts-ignore
   window.dataLayer = window.dataLayer || [];
@@ -72,7 +72,6 @@ const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? s
 <!-- Primary Meta Tags -->
 <meta name="title" content={title} />
 <meta name="description" content={description} />
-<meta name="keywords" content="tabtab, window switcher, tab switcher, app switcher, mac window manager, macOS, tab manager, productivity app, macos app, command tab alternative, window management, tab management, mac productivity, chrome tab manager, safari tab manager, vscode tab manager, alt tab, alttab, reddit" />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={ogType} />
@@ -96,11 +95,11 @@ const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? s
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<!-- <link rel="manifest" href="/site.webmanifest"> -->
 <meta name="msapplication-TileColor" content="#ffffff">
 <meta name="theme-color" content="#ffffff">
 <!--Ionicons -->
 <script
+  is:inline
   type="module"
   src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"
 ></script>
@@ -114,9 +113,9 @@ https://rsms.me/inter/
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
 <!---- Alpine  -->
-<script defer src="https://unpkg.com/@alpinejs/collapse@3.10.5/dist/cdn.min.js"></script>
-<script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
+<script is:inline defer src="https://unpkg.com/@alpinejs/collapse@3.10.5/dist/cdn.min.js"></script>
+<script is:inline defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
 
 {resolvedStructuredData && (
-  <script type="application/ld+json" set:html={JSON.stringify(resolvedStructuredData)} />
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(resolvedStructuredData)} />
 )}

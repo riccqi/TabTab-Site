@@ -2,19 +2,29 @@
   "name": "@riccqi/tabtab",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "npm@11.4.2",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=11.0.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
+    "check": "astro check",
+    "validate:routes": "node scripts/validate-routes.mjs",
+    "verify": "npm run check && npm run build && npm run validate:routes",
     "preview": "astro preview",
     "astro": "astro"
   },
   "devDependencies": {
-    "@astrojs/sitemap": "^3.1.6",
-    "@tailwindcss/forms": "^0.5.9",
-    "@tailwindcss/typography": "^0.5.15",
-    "@tailwindcss/vite": "^4.0.0-alpha.23",
-    "astro": "^4.15.4",
-    "tailwindcss": "^4.0.0-alpha.23"
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/sitemap": "^3.7.3",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/typography": "^0.5.20",
+    "astro": "^7.2.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3"
   }
 }
