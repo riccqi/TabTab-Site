@@ -1,0 +1,164 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const title = "TabTab vs AltTab: Windows and Tabs in One Search";
+const description = "Compare TabTab's window-and-tab search with AltTab's visual window switching for Mac.";
+const siteUrl = Astro.site ?? new URL("https://tabtabapp.net");
+const pageUrl = new URL("/compare/alttab/", siteUrl).href;
+const imageUrl = new URL("/og-image.png", siteUrl).href;
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: title,
+  description,
+  image: imageUrl,
+  datePublished: "2026-08-15",
+  dateModified: "2026-08-15",
+  mainEntityOfPage: pageUrl,
+  author: {
+    "@type": "Person",
+    name: "Richard Qi",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "TabTab",
+    url: new URL("/", siteUrl).href,
+  },
+  about: [
+    { "@type": "SoftwareApplication", name: "TabTab", operatingSystem: "macOS" },
+    { "@type": "SoftwareApplication", name: "AltTab", operatingSystem: "macOS" },
+  ],
+};
+
+const comparisonRows = [
+  ["Searches", "Windows and individual tabs", "Windows only"],
+  ["Tab workflow", "Search once and open the tab", "Switch windows, then find the tab manually"],
+  ["Tab URL search", "Yes", "No"],
+  ["Interface", "Clean, compact UI with app icons, browser favicons, and mouse support", "Window previews, app icon, and title layouts"],
+  ["Keyboard shortcuts", "Familiar macOS defaults and multiple custom shortcuts", "Extensive shortcut customisation"],
+  ["Switcher actions", "Minimize windows; close windows and tabs", "Close, minimize, and fullscreen windows"],
+  ["Privacy", "No personal data stored; limited anonymous analytics", "Usage statistics stay local"],
+  ["Open source", "No", "Yes"],
+];
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  socialImage="/og-image.png"
+  ogType="article"
+  structuredData={structuredData}
+>
+  <main class="bg-white">
+    <div class="mx-auto max-w-6xl px-8 py-20 md:px-12 md:py-28">
+      <header class="max-w-4xl">
+        <h1 class="max-w-4xl text-5xl font-medium leading-[1.04] tracking-tight text-black font-display md:text-7xl">
+          TabTab vs AltTab: 2026 comparison
+        </h1>
+        <p class="mt-7 max-w-2xl text-lg leading-8 text-gray-600">
+          TabTab switches to windows and individual tabs in supported apps. AltTab can switch to windows and show a preview of each window.
+        </p>
+        <dl class="mt-10 grid max-w-2xl gap-6">
+          <div>
+            <dt class="text-sm font-bold uppercase tracking-[0.14em] text-gray-400">Choose TabTab for</dt>
+            <dd class="mt-2 text-lg font-medium text-black">Windows and tabs in one search, with a cleaner, more compact UI</dd>
+          </div>
+          <div>
+            <dt class="text-sm font-bold uppercase tracking-[0.14em] text-gray-400">Choose AltTab for</dt>
+            <dd class="mt-2 text-lg font-medium text-black">Window switching with visual previews</dd>
+          </div>
+        </dl>
+      </header>
+
+      <figure class="mx-auto mt-16 max-w-3xl">
+        <img
+          src="/og-image.png"
+          alt="TabTab search interface listing windows and tabs from Safari, Chrome, Arc, VS Code, Cursor, Figma, and other Mac apps"
+          class="h-auto w-full rounded-2xl"
+        />
+        <figcaption class="mt-3 text-center text-sm text-gray-500">
+          TabTab: Search app names, window titles, tab titles, and URLs.
+        </figcaption>
+      </figure>
+
+      <section class="mt-16 max-w-4xl">
+        <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Search windows and individual tabs</h2>
+        <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+          <p>
+            Both switch windows. TabTab also keeps track of visible, minimized, and hidden windows. It searches tabs by title or URL. AltTab leaves tab search to the app after you switch.
+          </p>
+          <p class="mt-4">
+            A single browser or code editor window can hold many tabs. TabTab can match a website, document, repository, or part of a URL that you remember. It opens the result directly in supported apps such as Safari, Chrome, Arc, Firefox, VS Code, Cursor, Finder, and Figma.
+          </p>
+          <dl class="mt-7 grid gap-3 text-lg text-gray-700">
+            <div class="grid grid-cols-[7rem_1fr] gap-4"><dt class="font-semibold text-accent-600">TabTab</dt><dd>Find window or tab → switch</dd></div>
+            <div class="grid grid-cols-[7rem_1fr] gap-4"><dt class="font-semibold text-black">AltTab</dt><dd>Find window → switch → find tab manually</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="mt-20">
+        <h2 class="mb-8 text-3xl font-medium tracking-tight text-black font-display md:text-4xl">At a glance</h2>
+        <div class="overflow-x-auto rounded-2xl border border-gray-200">
+          <table class="w-full min-w-[760px] border-collapse text-left text-sm md:text-base">
+            <thead class="border-b border-gray-300 text-black">
+              <tr>
+                <th class="py-4 pr-5 font-semibold">Feature</th>
+                <th class="bg-sky-50 px-5 py-4 font-semibold text-accent-700">TabTab</th>
+                <th class="px-5 py-4 font-semibold">AltTab</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {comparisonRows.map(([feature, tabtab, alttab]) => (
+                <tr class="align-top">
+                  <th class="py-4 pr-5 font-semibold text-black">{feature}</th>
+                  <td class="bg-sky-50 px-5 py-4 font-medium text-gray-800">{tabtab}</td>
+                  <td class="px-5 py-4 text-gray-600">{alttab}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-14 max-w-4xl text-lg leading-8 text-gray-600">
+          <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Compact results or visual previews</h2>
+          <p class="mt-5">
+            TabTab displays app icons, browser favicons, titles, and URLs in a compact list. For most users, that is enough context to identify the right window or tab quickly while keeping more results visible at once.
+          </p>
+          <p class="mt-3">
+            AltTab includes thumbnail, app icon, and title layouts. Its thumbnail view can help when you recognize a window by appearance, but previews take up more space and may show information you do not need when a title and app icon are enough.
+          </p>
+          <p class="mt-3">
+            Use the keyboard or mouse to choose a TabTab result. Optional mouse activation opens TabTab when you move the cursor to the screen edge.
+          </p>
+        </div>
+
+        <div class="mt-14 max-w-4xl text-lg leading-8 text-gray-600">
+          <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Shortcuts comparison</h2>
+          <p class="mt-5">
+            TabTab mirrors familiar macOS app-switcher shortcuts wherever possible, so it feels natural from the first use. It also supports multiple custom keyboard shortcuts, including one that opens search directly. Inside the switcher, familiar keyboard commands can minimize a window or close the selected window or tab without making you switch to it first.
+          </p>
+          <p class="mt-3">
+            AltTab offers extensive shortcut customisation and several window controls. TabTab keeps the setup straightforward and brings the same quick workflow to windows and individual tabs.
+          </p>
+        </div>
+
+        <div class="mt-16 rounded-2xl bg-gray-950 p-8 text-white md:p-10">
+          <div>
+            <h2 class="text-3xl font-medium tracking-tight font-display md:text-4xl">One search for every window and tab</h2>
+            <p class="mt-4 max-w-2xl text-lg leading-8 text-gray-300">Choose TabTab if you lose track of windows and tabs. It feels fast and native to macOS. Try TabTab free now.</p>
+          </div>
+          <a
+            href="https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-7 inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold text-black transition hover:bg-sky-100"
+          >Download TabTab</a>
+        </div>
+      </section>
+
+      <p class="mt-8 text-sm leading-6 text-gray-400">
+        Updated 2026. Sources: <a class="underline hover:text-black" href="/pricing/">TabTab pricing</a>, <a class="underline hover:text-black" href="/privacy/">TabTab privacy</a>, <a class="underline hover:text-black" href="https://alt-tab.app/vs/tabtab" target="_blank" rel="noopener noreferrer">AltTab comparison</a>, <a class="underline hover:text-black" href="https://alt-tab.app/features" target="_blank" rel="noopener noreferrer">AltTab features</a>, and <a class="underline hover:text-black" href="https://alt-tab.app/privacy" target="_blank" rel="noopener noreferrer">AltTab privacy</a>.
+      </p>
+    </div>
+  </main>
+</BaseLayout>

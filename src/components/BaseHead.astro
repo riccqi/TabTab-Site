@@ -1,5 +1,53 @@
 ---
 import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  socialImage?: string | null;
+  ogType?: "website" | "article";
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const defaultTitle = "TabTab: Search & Switch Windows and Tabs on Mac";
+const defaultDescription = "Tired of losing track of windows and browser tabs? TabTab is a powerful Mac window switcher that lets you instantly search and switch to anything. Compact, fast, and beautiful.";
+const {
+  title = defaultTitle,
+  description = defaultDescription,
+  socialImage = "/og-image.png",
+  ogType = "website",
+  structuredData,
+} = Astro.props;
+const siteUrl = Astro.site ?? new URL("https://tabtabapp.net");
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl);
+const socialImageUrl = socialImage ? new URL(socialImage, siteUrl) : null;
+const softwareApplicationData = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "TabTab",
+  url: new URL("/", siteUrl).href,
+  image: new URL("/og-image.png", siteUrl).href,
+  operatingSystem: "macOS 14.0 or later",
+  applicationCategory: "UtilitiesApplication",
+  softwareVersion: "2.1",
+  downloadUrl: "https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg",
+  isAccessibleForFree: true,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    availability: "https://schema.org/InStock",
+    url: new URL("/pricing/", siteUrl).href,
+  },
+  featureList: [
+    "Switch between Mac windows",
+    "Search browser and app tabs by title or URL",
+    "Search by app name and window title",
+    "Customizable keyboard shortcuts",
+  ],
+  description: defaultDescription,
+};
+const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? softwareApplicationData : undefined);
 ---
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-P4PBQ5VZC9"></script>
@@ -15,33 +63,33 @@ import "../styles/global.css";
   gtag('config', 'G-P4PBQ5VZC9');
 </script>
 
-<title>TabTab: Search & Switch Windows and Tabs on Mac</title>
+<title>{title}</title>
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width" />
 <meta name="author" content="Richard Qi" />
 
 <!-- Primary Meta Tags -->
-<meta name="title" content="TabTab: Search & Switch Windows and Tabs on Mac" />
-<meta name="description" content="Tired of losing track of windows and browser tabs? TabTab is a powerful Mac window switcher that lets you instantly search and switch to anything. Compact, fast, and beautiful." />
+<meta name="title" content={title} />
+<meta name="description" content={description} />
 <meta name="keywords" content="tabtab, window switcher, tab switcher, app switcher, mac window manager, macOS, tab manager, productivity app, macos app, command tab alternative, window management, tab management, mac productivity, chrome tab manager, safari tab manager, vscode tab manager, alt tab, alttab, reddit" />
 
 <!-- Open Graph / Facebook -->
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://tabtabapp.net/" />
-<meta property="og:title" content="TabTab: Search & Switch Windows and Tabs on Mac" />
-<meta property="og:description" content="Tired of losing track of windows and browser tabs? TabTab is a powerful Mac window switcher that lets you instantly search and switch to anything. Compact, fast, and beautiful." />
-<meta property="og:image" content="https://tabtabapp.net/og-image.png" />
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonicalUrl.href} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+{socialImageUrl && <meta property="og:image" content={socialImageUrl.href} />}
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content="https://tabtabapp.net/" />
-<meta property="twitter:title" content="TabTab: Search & Switch Windows and Tabs on Mac" />
-<meta property="twitter:description" content="Tired of losing track of windows and browser tabs? TabTab is a powerful Mac window switcher that lets you instantly search and switch to anything. Compact, fast, and beautiful." />
-<meta property="twitter:image" content="https://tabtabapp.net/og-image.png" />
+<meta name="twitter:card" content={socialImageUrl ? "summary_large_image" : "summary"} />
+<meta name="twitter:url" content={canonicalUrl.href} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+{socialImageUrl && <meta name="twitter:image" content={socialImageUrl.href} />}
 
 <!-- Canonical URL -->
-<link rel="canonical" href="https://tabtabapp.net/" />
+<link rel="canonical" href={canonicalUrl.href} />
 
 <!-- Favicon -->
 <link rel="shortcut icon" href="/favicon.ico">
@@ -49,7 +97,6 @@ import "../styles/global.css";
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <!-- <link rel="manifest" href="/site.webmanifest"> -->
-<link rel="mask-icon" href="/favicon.svg" color="#ffffff">
 <meta name="msapplication-TileColor" content="#ffffff">
 <meta name="theme-color" content="#ffffff">
 <!--Ionicons -->
@@ -67,26 +114,9 @@ https://rsms.me/inter/
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
 <!---- Alpine  -->
+<script defer src="https://unpkg.com/@alpinejs/collapse@3.10.5/dist/cdn.min.js"></script>
 <script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
 
-<!-- Add this after your meta tags -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "TabTab",
-  "operatingSystem": "macOS",
-  "applicationCategory": "Productivity Software",
-  "offers": {
-    "@type": "Offer",
-    "price": "24",
-    "priceCurrency": "USD"
-  },
-  "description": "Tired of losing track of windows and browser tabs? TabTab is a powerful Mac window switcher that lets you instantly search and switch to anything. Compact, fast, and beautiful."
-  // "aggregateRating": {
-  //   "@type": "AggregateRating",
-  //   "ratingValue": "5.0",
-  //   "ratingCount": "100"
-  // }
-}
-</script>
+{resolvedStructuredData && (
+  <script type="application/ld+json" set:html={JSON.stringify(resolvedStructuredData)} />
+)}
