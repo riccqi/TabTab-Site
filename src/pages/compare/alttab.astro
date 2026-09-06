@@ -1,4 +1,5 @@
 ---
+import TabTabScreenshot from "../../components/TabTabScreenshot.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
 const title = "TabTab vs AltTab: Windows and Tabs in One Search";
@@ -13,7 +14,7 @@ const structuredData = {
   description,
   image: imageUrl,
   datePublished: "2026-08-15",
-  dateModified: "2026-08-15",
+  dateModified: "2026-09-06",
   mainEntityOfPage: pageUrl,
   author: {
     "@type": "Person",
@@ -49,7 +50,7 @@ const comparisonRows = [
   ogType="article"
   structuredData={structuredData}
 >
-  <main class="bg-white">
+  <article class="bg-white">
     <div class="mx-auto max-w-6xl px-8 py-20 md:px-12 md:py-28">
       <header class="mx-auto max-w-4xl">
         <h1 class="text-5xl font-medium leading-[1.04] tracking-tight text-black font-display md:text-6xl">
@@ -71,8 +72,7 @@ const comparisonRows = [
       </header>
 
       <figure class="mx-auto mt-16 max-w-3xl">
-        <img
-          src="/og-image.png"
+        <TabTabScreenshot
           alt="TabTab search interface listing windows and tabs from Safari, Chrome, Arc, VS Code, Cursor, Figma, and other Mac apps"
           class="h-auto w-full rounded-2xl"
         />
@@ -94,6 +94,13 @@ const comparisonRows = [
             <div class="grid grid-cols-[7rem_1fr] gap-4"><dt class="font-semibold text-accent-600">TabTab</dt><dd>Find window or tab → switch</dd></div>
             <div class="grid grid-cols-[7rem_1fr] gap-4"><dt class="font-semibold text-black">AltTab</dt><dd>Find window → switch → find tab manually</dd></div>
           </dl>
+          <h3 class="mt-10 text-xl font-semibold text-black">Example: finding an open GitHub issue</h3>
+          <p class="mt-3">
+            Suppose an issue is open in one of several browser windows. With TabTab, search for a distinctive word in the issue title or part of its URL, then select the tracked tab. With AltTab, choose the browser window first, then use the browser's tab search to locate the issue.
+          </p>
+          <p class="mt-3">
+            If you remember a window's appearance instead of its title, AltTab's thumbnails may make it easier to recognize. For the search workflow, follow the <a class="text-accent-600 hover:text-accent-700" href="/guides/search-open-tabs-on-mac/">guide to searching open tabs on Mac</a>.
+          </p>
         </div>
       </section>
 
@@ -160,5 +167,5 @@ const comparisonRows = [
         Updated 2026. Sources: <a class="underline hover:text-black" href="/pricing/">TabTab pricing</a>, <a class="underline hover:text-black" href="/privacy/">TabTab privacy</a>, <a class="underline hover:text-black" href="https://alt-tab.app/vs/tabtab" target="_blank" rel="noopener noreferrer">AltTab comparison</a>, <a class="underline hover:text-black" href="https://alt-tab.app/features" target="_blank" rel="noopener noreferrer">AltTab features</a>, and <a class="underline hover:text-black" href="https://alt-tab.app/privacy" target="_blank" rel="noopener noreferrer">AltTab privacy</a>.
       </p>
     </div>
-  </main>
+  </article>
 </BaseLayout>

@@ -1,0 +1,18 @@
+---
+import { Image } from "astro:assets";
+import screenshot from "../../public/og-image.png";
+interface Props { alt: string; class?: string; }
+const { alt, class: className } = Astro.props;
+---
+<Image
+  src={screenshot}
+  alt={alt}
+  width={768}
+  widths={[384, 768, 1536]}
+  sizes="(max-width: 831px) calc(100vw - 64px), 768px"
+  format="webp"
+  quality={85}
+  loading="eager"
+  decoding="async"
+  class={className}
+/>

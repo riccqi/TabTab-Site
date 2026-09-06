@@ -1,3 +1,7 @@
+---
+import { Image } from "astro:assets";
+import tabtabImage from "../../../public/tabtab-full.png";
+---
 <section class="bg-white/30 backdrop-blur-md border border-sky-200 rounded-2xl shadow-lg mx-4 md:mx-4 lg:mx-8 sticky top-1.5 md:top-4 z-50">
   <div class="px-0 lg:px-20">
     <div
@@ -5,7 +9,7 @@
       class="relative w-full py-1.5 mx-auto md:px-6 flex flex-col md:grid md:grid-cols-3 md:items-center">
       <div class="flex flex-row items-center justify-between lg:justify-start">
         <div class="relative w-24 h-10 md:w-36 md:h-16">
-          <img src="/tabtab-full.png" alt="TabTab" class="w-full h-full object-contain" />
+          <Image src={tabtabImage} width={144} densities={[1, 2]} format="webp" quality={85} loading="eager" alt="TabTab" class="w-full h-full object-contain" />
           <a href="/" class="absolute inset-0">
             <span class="sr-only">Home</span>
           </a>

@@ -1,0 +1,101 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { releases } from "../data/releases";
+---
+
+<BaseLayout
+  title="Changelog — TabTab"
+  description="See what changed in every TabTab release."
+>
+  <section class="bg-gradient-to-b from-accent-50 to-white">
+    <div class="mx-auto max-w-4xl px-8 pb-16 pt-24 md:px-12 md:pb-20 md:pt-32">
+      <p class="text-sm font-bold uppercase tracking-[0.2em] text-accent-700">
+        Release history
+      </p>
+      <h1 class="mt-4 text-5xl font-bold tracking-tight text-black md:text-7xl">
+        Changelog
+      </h1>
+      <p class="mt-6 max-w-2xl text-lg leading-8 text-neutral-600 md:text-xl">
+        Every public TabTab release, from the first version to the latest.
+      </p>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-5xl px-8 pb-24 md:px-12 md:pb-32">
+    <ol class="border-t border-neutral-200">
+      {releases.map((release, releaseIndex) => (
+        <li>
+          <article
+            id={`version-${release.version}`}
+            class="grid gap-6 border-b border-neutral-200 py-10 md:grid-cols-[9rem_1fr] md:gap-12 md:py-14"
+          >
+            <div class="flex items-center gap-3 self-start md:flex-col md:items-start md:gap-3">
+              <h2 class="text-xl font-bold tracking-tight text-black md:text-2xl">
+                {release.version}
+              </h2>
+              {releaseIndex === 0 && (
+                <span class="rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold text-accent-800">
+                  Latest
+                </span>
+              )}
+            </div>
+
+            <div>
+              {release.title && (
+                <p class="text-2xl font-semibold tracking-tight text-black md:text-3xl">
+                  {release.title}
+                </p>
+              )}
+
+              {release.summary && (
+                <p class="mt-3 text-base leading-7 text-neutral-600">
+                  {release.summary}
+                </p>
+              )}
+
+              {release.sections.length > 0 ? (
+                <div class:list={["space-y-8", release.title || release.summary ? "mt-7" : ""]}>
+                  {release.sections.map((section) => (
+                    <section>
+                      {section.heading && (
+                        <h3 class="mb-3 text-sm font-bold uppercase tracking-[0.14em] text-neutral-500">
+                          {section.heading}
+                        </h3>
+                      )}
+
+                      {section.body && (
+                        <p class="mb-3 text-base leading-7 text-neutral-600">
+                          {section.body}
+                        </p>
+                      )}
+
+                      {section.items && (
+                        <ul class="space-y-3 text-base leading-7 text-neutral-700">
+                          {section.items.map((item) => (
+                            <li class="relative pl-5 before:absolute before:left-0 before:top-[0.65rem] before:h-1.5 before:w-1.5 before:rounded-full before:bg-accent-400">
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {section.detail && (
+                        <p class="mt-4 rounded-xl bg-neutral-50 px-4 py-3 text-sm leading-6 text-neutral-600">
+                          {section.detail}
+                        </p>
+                      )}
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <p class="mt-1 text-base leading-7 text-neutral-500">
+                  No release notes were included in the appcast for this version.
+                </p>
+              )}
+            </div>
+          </article>
+        </li>
+      ))}
+    </ol>
+  </section>
+</BaseLayout>

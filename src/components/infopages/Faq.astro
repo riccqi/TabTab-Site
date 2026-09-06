@@ -1,3 +1,6 @@
+---
+import { supportedAppGroups } from "../../data/supportedApps";
+---
 <section aria-labelledby="faq-section" id="faq">  
   <div
     class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-24 scroll-mt-20"
@@ -266,41 +269,14 @@
           >
             <div class="p-4 pt-2 text-zinc-500">
               Currently, TabTab supports tab management for the following apps:
-              <h4 class="font-semibold mt-2">Browsers:</h4>
-              <ul class="list-disc list-inside ml-4">
-                <li>Safari</li>
-                <li>Google Chrome</li>
-                <li>Google Chrome Beta</li>
-                <li>Arc Browser</li>
-                <li>Firefox</li>
-                <li>Firefox Nightly</li>
-                <li>Firefox Developer Edition</li>
-                <li>Brave Browser</li>
-                <li>Microsoft Edge</li>
-                <li>Comet</li>
-                <li>Helium</li>
-              </ul>
-
-              <h4 class="font-semibold mt-2">Code Editors:</h4>
-              <ul class="list-disc list-inside ml-4">
-                <li>Visual Studio Code</li>
-                <li>Xcode</li>
-                <li>Cursor</li>
-              </ul>
-
-              <h4 class="font-semibold mt-2">Design:</h4>
-              <ul class="list-disc list-inside ml-4">
-                <li>Figma</li>
-              </ul>
-
-              <h4 class="font-semibold mt-2">Utilities:</h4>
-              <ul class="list-disc list-inside ml-4">
-                <li>Preview</li>
-                <li>Finder</li>
-                <li>Terminal</li>
-                <li>Notion</li>
-                <li>Fork</li>
-              </ul>
+              {supportedAppGroups.map((group) => (
+                <Fragment>
+                  <h4 class="font-semibold mt-2">{group.label}:</h4>
+                  <ul class="list-disc list-inside ml-4">
+                    {group.names.map((name) => <li>{name}</li>)}
+                  </ul>
+                </Fragment>
+              ))}
             </div>
           </div>
         </div>

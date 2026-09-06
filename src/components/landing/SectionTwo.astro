@@ -1,3 +1,7 @@
+---
+import { Image } from "astro:assets";
+import { supportedApps } from "../../data/supportedApps";
+---
 <section>
   <div
     class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 pb-16 scroll-mt-20">
@@ -14,10 +18,10 @@
         <img src="/symbols/macwindow.on.rectangle.svg" alt="Mac window icon" class="w-8 h-8 md:w-12 md:h-12 filter brightness-0 invert">
       </div>
     </div>
-          <p
+          <h2
             class="text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
             Effortless windows switching
-          </p>
+          </h2>
           <p class="text-base mt-4 text-gray-500">
             Simple and fast.
             Multiple windows from the same app? No problem.
@@ -59,14 +63,14 @@
         <img src="/symbols/rectangle.grid.1x2.fill.svg" alt="Tab icon" class="w-8 h-8 md:w-12 md:h-12 filter brightness-0 invert">
       </div>
     </div>
-          <p
+          <h2
             class="text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
             Tabs tracked automatically, ready when you need them
-          </p>
+          </h2>
           <p class="text-base mt-4 text-gray-500">
             Some say this is a gamechanger for their workflow. 
             <br>
-            Finding the right tab shouldn’t mean digging through cluttered app interfaces. Whether you’re browsing, coding, or designing, TabTab brings all your tabs together — neatly organized by recency.
+            Finding the right tab shouldn’t mean digging through cluttered app interfaces. Whether you’re browsing, coding, or designing, TabTab brings your tabs together. Sort by recency or alphabetically, and group tabs by window or app to suit your workflow.
             <br>
             <strong>No browser extensions or plugins required.</strong>
           </p>
@@ -97,79 +101,22 @@
       <h2 class="text-xl font-medium text-center mb-8">Apps with tab tracking</h2>
       
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-        <div class="flex flex-col items-center">
-          <img alt="Safari logo" src="/safari-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Safari</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Chrome logo" src="/chrome-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Google Chrome</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Brave logo" src="/brave-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Brave</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Edge logo" src="/edge-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Microsoft Edge</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Firefox logo" src="/firefox-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Firefox</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Arc logo" src="/arc-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Arc</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="VS Code logo" src="/vscode-logo.png" class="w-16 h-16 object-contain p-2" />
-          <p class="mt-2 text-sm text-center">Visual Studio Code</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Xcode logo" src="/xcode-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Xcode</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Cursor logo" src="/cursor-logo.png" class="w-16 h-16 object-contain p-1" />
-          <p class="mt-2 text-sm text-center">Cursor</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Comet logo" src="/comet-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Comet</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Helium logo" src="/helium-logo.png" class="w-16 h-16 object-contain p-1" />
-          <p class="mt-2 text-sm text-center">Helium</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Figma logo" src="/figma-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Figma</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Preview logo" src="/preview-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Preview</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Finder logo" src="/finder-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Finder</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Terminal logo" src="/terminal-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Terminal</p>
-        </div>
-        <!-- <div class="flex flex-col items-center">
-          <img alt="Warp logo" src="/warp-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Warp</p>
-        </div> -->
-
-        <div class="flex flex-col items-center">
-          <img alt="Notion logo" src="/notion-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Notion</p>
-        </div>
-        <div class="flex flex-col items-center">
-          <img alt="Fork logo" src="/fork-logo.png" class="w-16 h-16 object-contain" />
-          <p class="mt-2 text-sm text-center">Fork</p>
-        </div>
+        {supportedApps.map((app) => (
+          <div class="flex flex-col items-center">
+            <Image
+              alt={`${app.name} logo`}
+              src={app.logo}
+              width={64}
+              densities={[1, 2]}
+              format="webp"
+              quality={85}
+              loading="lazy"
+              decoding="async"
+              class:list={["w-16 h-16 object-contain", app.logoPadding]}
+            />
+            <p class="mt-2 text-sm text-center">{app.name}</p>
+          </div>
+        ))}
       </div>
     </div>
 
@@ -188,10 +135,10 @@
         <img src="/symbols/magnifyingglass.svg" alt="Search icon" class="w-8 h-8 md:w-11 md:h-11 filter brightness-0 invert">
       </div>
     </div>
-          <p
+          <h2
             class="text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
             Powerful search
-          </p>
+          </h2>
           <p class="text-base mt-4 text-gray-500">
             When you have many windows or tabs open, searching makes everything faster. TabTab lets you find what you need by URL, tab title, app name, and more — making your workflow super efficient.
           </p>

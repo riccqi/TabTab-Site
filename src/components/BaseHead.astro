@@ -29,7 +29,7 @@ const softwareApplicationData = {
   image: new URL("/og-image.png", siteUrl).href,
   operatingSystem: "macOS 14.0 or later",
   applicationCategory: "UtilitiesApplication",
-  softwareVersion: "2.1",
+  softwareVersion: "2.1.2",
   downloadUrl: "https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg",
   isAccessibleForFree: true,
   offers: {
@@ -97,18 +97,6 @@ const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? s
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <meta name="msapplication-TileColor" content="#ffffff">
 <meta name="theme-color" content="#ffffff">
-<!--Ionicons -->
-<script
-  is:inline
-  type="module"
-  src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"
-></script>
-<!--
-https://rsms.me/inter/
--->
-<link rel="preconnect" href="https://rsms.me/" />
-<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-
 <!---- Alpine  -->
 <script is:inline defer src="https://unpkg.com/@alpinejs/collapse@3.10.5/dist/cdn.min.js"></script>
 <script is:inline defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>

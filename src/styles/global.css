@@ -19,13 +19,22 @@
   --color-accent-900: #002E4D;
 
 }
-/* CSS */
-:root {
-  font-family: Inter, sans-serif;
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-latin.woff2") format("woff2");
 }
-@supports (font-variation-settings: normal) {
-  /* Use variable font if supported */
-  :root {
-    font-family: InterVariable, sans-serif;
-  }
+
+@font-face {
+  font-family: "Inter";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-Italic-latin.woff2") format("woff2");
+}
+
+:root {
+  font-family: "Inter", sans-serif;
 }

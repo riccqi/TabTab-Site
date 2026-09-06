@@ -1,4 +1,6 @@
 ---
+import { supportedAppGroups } from "../../data/supportedApps";
+import TabTabScreenshot from "../../components/TabTabScreenshot.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
 const title = "How to Search All Open Tabs on Mac | TabTab";
@@ -13,7 +15,7 @@ const structuredData = {
   description,
   image: imageUrl,
   datePublished: "2026-08-15",
-  dateModified: "2026-08-15",
+  dateModified: "2026-09-06",
   mainEntityOfPage: pageUrl,
   author: {
     "@type": "Person",
@@ -39,7 +41,7 @@ const structuredData = {
   ogType="article"
   structuredData={structuredData}
 >
-  <main class="bg-white">
+  <article class="bg-white">
     <div class="mx-auto max-w-6xl px-8 py-20 md:px-12 md:py-28">
       <header class="mx-auto max-w-4xl">
         <h1 class="text-5xl font-medium leading-[1.04] tracking-tight text-black font-display md:text-6xl">
@@ -51,8 +53,7 @@ const structuredData = {
       </header>
 
       <figure class="mx-auto mt-16 max-w-3xl">
-        <img
-          src="/og-image.png"
+        <TabTabScreenshot
           alt="TabTab displaying a searchable list of open browser, editor, design, and Finder tabs on a Mac"
           class="h-auto w-full rounded-2xl border border-gray-200"
         />
@@ -88,18 +89,51 @@ const structuredData = {
         </div>
         <div class="max-w-3xl text-lg leading-8 text-gray-600">
           <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Start searching</h2>
-          <p class="mt-5">
-            <a class="text-accent-600 hover:text-accent-700" href="https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg">Download TabTab</a>, open it, and follow the quick setup. Choose a shortcut, then type to find any window or tab. No browser extension required.
-          </p>
+          <ol class="mt-5 list-decimal space-y-4 pl-6">
+            <li><a class="text-accent-600 hover:text-accent-700" href="https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg">Download TabTab</a> and open it on a Mac running macOS 14 or later.</li>
+            <li>Follow the setup prompts and grant the requested Accessibility access so TabTab can track and switch windows and tabs.</li>
+            <li>Choose a keyboard shortcut in TabTab's settings. Use a combination that does not conflict with shortcuts you already use.</li>
+            <li>Open a few tabs in a supported app. Invoke TabTab, type part of a tab's title or URL, select the result, and press Enter.</li>
+          </ol>
+          <p class="mt-5">No browser extension is required. The free plan tracks your five most recent windows and tabs; <a class="text-accent-600 hover:text-accent-700" href="/pricing/">Pro removes that limit</a>.</p>
+        </div>
+      </section>
+
+      <section class="mx-auto mt-20 max-w-4xl">
+        <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">What to type when you cannot remember the tab</h2>
+        <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+          <p>Start with the part you remember. These examples work when a matching tab or window is open and tracked:</p>
+          <ul class="mt-5 list-disc space-y-3 pl-6">
+            <li><strong class="text-black">A website:</strong> type <code>github.com</code> to look for an open GitHub tab by URL.</li>
+            <li><strong class="text-black">A document:</strong> type a distinctive word from its title, such as <code>roadmap</code>.</li>
+            <li><strong class="text-black">An app:</strong> type <code>Finder</code> when you remember the app but not the window title.</li>
+          </ul>
+          <p class="mt-5">If the results are too broad, use a more distinctive part of the title or URL. Search only covers tracked windows and tabs, so a closed page will not appear.</p>
+        </div>
+      </section>
+
+      <section class="mx-auto mt-20 max-w-4xl">
+        <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">If a tab does not appear</h2>
+        <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+          <ul class="list-disc space-y-4 pl-6">
+            <li>Check that the tab is still open and its app supports tab tracking. Window switching and individual tab tracking are different features.</li>
+            <li>On the free plan, switch to the missing window or tab first so it is among the five most recent items, then search again.</li>
+            <li>Check that TabTab has the Accessibility access requested during setup, especially if windows are also missing or switching does not work.</li>
+            <li>Try the latest TabTab release to get recent tab-tracking and switching fixes.</li>
+          </ul>
+          <p class="mt-5">Still having trouble? <a class="text-accent-600 hover:text-accent-700" href="mailto:riccqi@pm.me">Contact support</a> with the app name and version, macOS version, and your Mac's system language.</p>
         </div>
       </section>
 
       <section class="mx-auto mt-20 max-w-4xl">
         <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Browsers, editors, and Mac apps</h2>
         <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
-          <p><strong class="font-semibold text-black">Browsers:</strong> Safari, Chrome, Chrome Beta, Arc, Firefox, Firefox Nightly, Firefox Developer Edition, Brave, Microsoft Edge, Comet, and Helium.</p>
-          <p class="mt-3"><strong class="font-semibold text-black">Editors:</strong> Visual Studio Code, Xcode, and Cursor.</p>
-          <p class="mt-3"><strong class="font-semibold text-black">Other apps:</strong> Figma, Finder, Preview, Terminal, Notion, and Fork.</p>
+          {supportedAppGroups.map((group, index) => (
+            <p class:list={[index > 0 && "mt-3"]}>
+              <strong class="font-semibold text-black">{group.label}:</strong>{" "}
+              {new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(group.names)}.
+            </p>
+          ))}
           <p class="mt-6">
             Support depends on how each app exposes its tabs to macOS. Check the <a class="text-accent-600 hover:text-accent-700" href="/#faq">TabTab FAQ</a> for the current list.
           </p>
@@ -125,5 +159,5 @@ const structuredData = {
         >Download TabTab</a>
       </div>
     </div>
-  </main>
+  </article>
 </BaseLayout>
