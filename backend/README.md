@@ -1,7 +1,7 @@
 # TabTab email
 
 The GitHub Pages site posts to a Cloudflare Worker. D1 is the master contact list;
-Resend is only the delivery service. There are no runtime npm dependencies.
+Resend is only the delivery service. Markdown is rendered by a bundled parser; the dashboard uses no external frontend services.
 
 ## Deployment checklist
 
@@ -94,10 +94,10 @@ node backend/scripts/contacts.mjs release .private/release.json
 node backend/scripts/contacts.mjs release .private/release.json --send
 ```
 
-Default maximum is 80 new messages per invocation, leaving some room on Resend's
-free 100/day plan for confirmations. **This is not a daily quota controller:**
-check total provider usage before sending. On Pro set `TABTAB_SEND_LIMIT` to the
-desired batch size. The CLI sends at less than two requests/second and stops on
+Default maximum is 80 new messages per invocation. All sends also share the
+dashboard’s database quota, reserving 20 of the Free plan’s 100 daily attempts
+for confirmations, login codes, and tests. After upgrading Resend, select paid
+mode in dashboard Settings and set `TABTAB_SEND_LIMIT` to the desired CLI batch size. The CLI sends at less than two requests/second and stops on
 the first error. Running the same campaign again skips successful deliveries.
 Content is immutable per recipient/campaign; do not reuse an ID for a different
 release. No release is sent automatically on Git pushes.
@@ -122,3 +122,45 @@ and public signup must also be verified before cutover.
 ## Live configuration (2026-10-13)
 
 Worker: `https://updates.tabtabapp.net`. D1: `tabtab-email`. Resend domain: `tabtabapp.net` (verified), sending-only domain-restricted key stored in Worker secrets. Lemon Squeezy store: `125728`, product: `372705`. Both signed webhooks are registered. Private secrets are in ignored `backend/.secrets.json` (0600); never commit this file. Release sending still requires a valid `POSTAL_ADDRESS`. No release campaign has been sent.
+
+## Private dashboard
+
+Open **https://updates.tabtabapp.net/dashboard**. Click **Email me a sign-in code**;
+enter the 8-digit code sent to `xiaochean@gmail.com`. Codes expire in 10 minutes
+and allow five attempts. Dashboard access is restricted to that owner inbox.
+Sessions last seven days and use secure, HttpOnly, SameSite cookies. Sign out to
+revoke the current session. No admin API key is exposed to browser JavaScript.
+
+- **Subscribers:** search names/emails, filter statuses, inspect source and subscription
+  basis, and unsubscribe a contact without deleting their history.
+- **Write an update:** Markdown editor with saved drafts, subject, and preview text.
+  Headings, links, images, tables, lists, quotes, and code blocks are supported.
+  Raw HTML is escaped; links and images are restricted to safe URL schemes.
+- **Preview:** the same inline-styled, table-based HTML renderer used for sends,
+  in desktop/mobile widths and illustrative Gmail, Apple Mail, or Outlook frames.
+  These are **browser approximations**, not actual client screenshots or dark-mode
+  emulation. Use **Send test** to view exact rendering in real client inboxes.
+- **Settings:** configure a valid mailing address and choose the sending allowance.
+  Selecting paid mode does not purchase or upgrade a Resend plan.
+- **Send test:** sends only to the address entered. Tests use an inert unsubscribe
+  link and a `[TEST]` subject. An exact-content test is required before a campaign
+  can start. Editing the message or footer invalidates that test requirement.
+- **Review & send:** confirms the subject, snapshots the currently subscribed
+  audience, and queues the campaign. Content and footer are frozen when it starts.
+  Pause/resume is available; an already in-flight email may finish after pausing.
+
+A Cloudflare Cron Trigger runs each minute, sending up to six emails per invocation
+within D1 Free's query limit. The dashboard can be closed while sending continues.
+On the default Free configuration, campaign emails stop at 80 total email attempts
+in a UTC day, reserving the last 20 of 100 for sign-in, confirmation, and test emails.
+The campaign resumes after the UTC day changes. Paid mode caps attempts at 5,000/day;
+a list of roughly 2,300 recipients takes about 6.5 hours with this background rate.
+All sending entrypoints share the database quota, including the original CLI.
+Provider monthly limits still apply. Uncertain provider outcomes pause the campaign
+for review; they are never blindly retried. Each recipient's status is checked again
+before delivery, so later opt-outs are honored.
+
+The dashboard stores drafts, audience snapshots, login-code hashes, session hashes,
+and usage totals in D1. It adds one bundled Markdown parser (`marked`), no external
+frontend/CDN dependencies, and no new third-party service. No customer campaign was
+sent as part of dashboard setup.

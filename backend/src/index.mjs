@@ -1,5 +1,9 @@
 import { sha256, token, verifyToken, verifyLemon, verifyResend } from './crypto.mjs';
 import { normalizeEmail, cleanContact, contactStatements } from './store.mjs';
+import { dashboardAPI, runCampaigns } from './dashboard-api.mjs';
+import { dashboardHTML, dashboardCSS, dashboardScript } from './dashboard-ui.mjs';
+import { renderEmail } from './email-template.mjs';
+import { reserveEmail, settings } from './mail-budget.mjs';
 
 const CONSENT = 'tabtab-release-updates-v1';
 const okMessage = 'If this address can subscribe, a confirmation email is on its way. Please check your inbox.';
@@ -32,6 +36,7 @@ function parseJSON(body) { try { return JSON.parse(body); } catch { fail('Invali
 
 export async function sendEmail(env, message, idempotencyKey) {
   required(env, ['RESEND_API_KEY','FROM_EMAIL']);
+  await reserveEmail(env,idempotencyKey.startsWith('release/'));
   // Resend is a delivery adapter; no contacts are stored in its marketing list.
   const response = await fetch('https://api.resend.com/emails', {
     method:'POST', signal: AbortSignal.timeout(15000),
@@ -159,13 +164,21 @@ async function admin(request, env, path) {
   return json({ error:'Not found.' },404);
 }
 
-async function sendRelease(request,env) {
+export async function sendRelease(request,env) {
+  if(!env.POSTAL_ADDRESS) env={...env,POSTAL_ADDRESS:(await settings(env)).postal_address};
   required(env,['RESEND_API_KEY','TOKEN_SECRET','PUBLIC_URL','POSTAL_ADDRESS','RESEND_WEBHOOK_SECRET']);
   const data = parseJSON(await bodyText(request,32768));
-  if (!/^[a-zA-Z0-9._-]{1,80}$/.test(data.campaign_id || '') || typeof data.contact_id !== 'string' || typeof data.subject !== 'string' || !data.subject.trim() || data.subject.length>200 || typeof data.text !== 'string' || !data.text.trim() || data.text.length>20000) fail('Invalid release message.');
+  const content = data?.markdown ?? data?.text;
+  if (!/^[a-zA-Z0-9._-]{1,80}$/.test(data?.campaign_id || '') || typeof data.contact_id !== 'string' || typeof data.subject !== 'string' || !data.subject.trim() || data.subject.length>200 || typeof content !== 'string' || !content.trim() || content.length>20000) fail('Invalid release message.');
   const contact = await env.DB.prepare('SELECT id,email,status FROM contacts WHERE id=?').bind(data.contact_id).first();
   if (!contact || contact.status !== 'subscribed') return json({ skipped:true });
-  const contentHash = await sha256(JSON.stringify([data.subject,data.text,env.FROM_EMAIL,env.POSTAL_ADDRESS]));
+  const value = await token(env.TOKEN_SECRET,{ id:contact.id,purpose:'unsubscribe' });
+  const url = `${env.PUBLIC_URL}/unsubscribe?token=${encodeURIComponent(value)}`;
+  const rendered = data.markdown !== undefined ? renderEmail({...data,postalAddress:env.POSTAL_ADDRESS,unsubscribeUrl:url}) : {
+    text:`${data.text}\n\nTabTab\n${env.POSTAL_ADDRESS}\nUnsubscribe: ${url}`,
+    html:`<div style="font:16px/1.6 system-ui;max-width:600px">${data.text.split('\n\n').map(p=>`<p>${esc(p).replace(/\n/g,'<br>')}</p>`).join('')}<hr><p>TabTab<br>${esc(env.POSTAL_ADDRESS)}<br><a href="${esc(url)}">Unsubscribe</a></p></div>`
+  };
+  const contentHash = await sha256(JSON.stringify([data.subject,rendered,env.FROM_EMAIL,env.POSTAL_ADDRESS]));
   const previous = await env.DB.prepare('SELECT * FROM deliveries WHERE campaign_id=? AND contact_id=?').bind(data.campaign_id,contact.id).first();
   if (previous) {
     if (previous.content_hash !== contentHash) fail('Campaign content changed. Use a new campaign ID.',409);
@@ -177,29 +190,39 @@ async function sendRelease(request,env) {
     SELECT ?,id,?,'sending',? FROM contacts WHERE id=? AND status='subscribed' RETURNING contact_id`)
     .bind(data.campaign_id,contentHash,now(),contact.id).first();
   if (!claimed) return json({ skipped:true });
-  const value = await token(env.TOKEN_SECRET,{ id:contact.id,purpose:'unsubscribe' });
-  const url = `${env.PUBLIC_URL}/unsubscribe?token=${encodeURIComponent(value)}`;
   try {
     const result = await sendEmail(env,{
       to:contact.email,subject:data.subject,
-      text:`${data.text}\n\nTabTab\n${env.POSTAL_ADDRESS}\nUnsubscribe: ${url}`,
-      html:`<div style="font:16px/1.6 system-ui;max-width:600px">${data.text.split('\n\n').map(p=>`<p>${esc(p).replace(/\n/g,'<br>')}</p>`).join('')}<hr><p>TabTab<br>${esc(env.POSTAL_ADDRESS)}<br><a href="${esc(url)}">Unsubscribe</a></p></div>`,
+      ...rendered,
       headers:{ 'List-Unsubscribe':`<${url}>`,'List-Unsubscribe-Post':'List-Unsubscribe=One-Click' }
     },`release/${data.campaign_id}/${contact.id}`);
     await env.DB.prepare(`UPDATE deliveries SET state='sent',provider_id=? WHERE campaign_id=? AND contact_id=?`).bind(result.id,data.campaign_id,contact.id).run();
     return json({ sent:true });
   } catch(error) {
+    if (error.quota) {
+      // Quota rejection happens before contacting Resend; no delivery was attempted.
+      await env.DB.prepare("DELETE FROM deliveries WHERE campaign_id=? AND contact_id=? AND state='sending'").bind(data.campaign_id,contact.id).run();
+      throw error;
+    }
     await env.DB.prepare(`UPDATE deliveries SET state=?,provider_id=NULL WHERE campaign_id=? AND contact_id=?`).bind(error.providerStatus && error.providerStatus<500 ? 'failed' : 'uncertain',data.campaign_id,contact.id).run();
     throw error;
   }
 }
 
 export default {
+  async scheduled(event,env,ctx) {
+    ctx.waitUntil(runCampaigns(env,{sendRelease}));
+  },
   async fetch(request,env) {
     let response;
     try {
       const path = new URL(request.url).pathname;
-      if (request.method === 'OPTIONS') {
+      if (path.startsWith('/dashboard/api/')) response = await dashboardAPI(request,env,{sendEmail,sendRelease,normalizeEmail});
+      else if (path === '/dashboard' && request.method === 'GET') response = new Response(dashboardHTML,{headers:{'Content-Type':'text/html; charset=utf-8'}});
+      else if (path === '/dashboard/app.js' && request.method === 'GET') response = new Response(dashboardScript,{headers:{'Content-Type':'text/javascript; charset=utf-8'}});
+      else if (path === '/dashboard/style.css' && request.method === 'GET') response = new Response(dashboardCSS,{headers:{'Content-Type':'text/css; charset=utf-8'}});
+      else if (path === '/dashboard/test-unsubscribe' && request.method === 'GET') response = page('This is a test email','The unsubscribe link in a real release updates that recipient’s subscription immediately. No subscription was changed.');
+      else if (request.method === 'OPTIONS') {
         response = request.headers.get('origin') === env.SITE_ORIGIN && path === '/subscribe' ? new Response(null,{ status:204 }) : json({ error:'Forbidden.' },403);
       } else if (path === '/health' && request.method === 'GET') {
         await env.DB.prepare('SELECT 1 FROM contacts LIMIT 1').first();
@@ -217,7 +240,7 @@ export default {
     response.headers.set('Cache-Control','no-store');
     response.headers.set('Referrer-Policy','no-referrer');
     response.headers.set('X-Content-Type-Options','nosniff');
-    response.headers.set('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
+    response.headers.set('Content-Security-Policy',new URL(request.url).pathname.startsWith('/dashboard') ? "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src https: data:; connect-src 'self'; frame-src 'self' about:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'" : "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
     if (request.headers.get('origin') === env.SITE_ORIGIN && new URL(request.url).pathname === '/subscribe') {
       response.headers.set('Access-Control-Allow-Origin',env.SITE_ORIGIN);
       response.headers.set('Access-Control-Allow-Methods','POST, OPTIONS');
