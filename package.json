@@ -34,6 +34,6 @@
     "wrangler": "^4.150.0"
   },
   "dependencies": {
-    "@riccqi/email-studio": "https://raw.githubusercontent.com/riccqi/opencam-site/0bac35951267d81f2393413c5c8f53c05290233b/packages/releases/riccqi-email-studio-1.0.0.tgz"
+    "@riccqi/email-studio": "https://raw.githubusercontent.com/riccqi/opencam-site/518dbed7c7a8e3f1ac15e0f667210732fcfdad63/packages/releases/riccqi-email-studio-1.0.1.tgz"
   }
 }
