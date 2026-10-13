@@ -13,7 +13,11 @@
     "build": "astro build",
     "check": "astro check",
     "validate:routes": "node scripts/validate-routes.mjs",
-    "verify": "npm run check && npm run build && npm run validate:routes",
+    "verify": "npm run test:email && npm run check && npm run build && npm run validate:routes",
+    "test:email": "node --test backend/test/*.test.mjs",
+    "email:dev": "wrangler dev --config backend/wrangler.jsonc",
+    "email:deploy": "wrangler deploy --config backend/wrangler.jsonc",
+    "email:migrate": "wrangler d1 migrations apply tabtab-email --config backend/wrangler.jsonc --remote",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -25,6 +29,7 @@
     "@tailwindcss/typography": "^0.5.20",
     "astro": "^7.2.2",
     "tailwindcss": "^4.3.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.150.0"
   }
 }
