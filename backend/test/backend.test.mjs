@@ -215,3 +215,17 @@ test('central studio credential is dashboard-only and legacy dashboard logins ar
  assert.equal((await worker.fetch(request('/admin/contacts',undefined,{Authorization:'Bearer '+env.SHARED_STUDIO_TOKEN}),env)).status,401);
  const cross=new Request('https://updates.tabtabapp.net/dashboard/api/settings',{method:'POST',headers:{Authorization:'Bearer '+env.SHARED_STUDIO_TOKEN,Origin:'https://evil.example','X-TabTab-Dashboard':'1'},body:'{}'});assert.equal((await worker.fetch(cross,env)).status,403);
 });
+
+test('a concurrent draft edit cannot bypass exact-content test before launch',async()=>{
+ const {env,sql}=setup();await seed(env);
+ await worker.fetch(dash('/settings',{postal_address:'Test address',daily_limit:100}),env);
+ const d={id:'concurrent-edit',subject:'Tested subject',markdown:'Tested body',preheader:''};
+ await worker.fetch(dash('/campaign',d),env);
+ const {sha256}=await import('../src/crypto.mjs');
+ const {settings}=await import('../src/mail-budget.mjs');const config=await settings(env);
+ sql.prepare('UPDATE campaigns SET test_hash=? WHERE id=?').run(await sha256(JSON.stringify([d.subject,d.markdown,d.preheader,config.postal_address])),d.id);
+ const batch=env.DB.batch;
+ env.DB.batch=async statements=>{sql.prepare("UPDATE campaigns SET subject='Untested edit',test_hash=NULL WHERE id=?").run(d.id);return batch(statements);};
+ const result=await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env);
+ assert.equal(result.status,409);assert.equal(sql.prepare('SELECT state FROM campaigns WHERE id=?').get(d.id).state,'draft');assert.equal(sql.prepare('SELECT COUNT(*) n FROM campaign_recipients').get().n,0);
+});

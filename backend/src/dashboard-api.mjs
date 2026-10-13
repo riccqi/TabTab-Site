@@ -82,9 +82,12 @@ export async function dashboardAPI(req,env,services){
   if(!env.RESEND_WEBHOOK_SECRET)bad('Bounce handling must be configured first.',503);
   // The state transition and audience snapshot are atomic. Double clicks do not rebuild the audience.
   await env.DB.batch([
-   env.DB.prepare("INSERT OR IGNORE INTO campaign_recipients(campaign_id,contact_id) SELECT ?,id FROM contacts WHERE status='subscribed' AND EXISTS (SELECT 1 FROM campaigns WHERE id=? AND state='draft')").bind(id,id),
-   env.DB.prepare("UPDATE campaigns SET state='sending',postal_address=?,started_at=?,updated_at=? WHERE id=? AND state='draft'").bind(config.postal_address,now(),now(),id)
-  ]);return json({ok:true});
+   env.DB.prepare("INSERT OR IGNORE INTO campaign_recipients(campaign_id,contact_id) SELECT ?,id FROM contacts WHERE status='subscribed' AND EXISTS (SELECT 1 FROM campaigns WHERE id=? AND state='draft' AND subject=? AND markdown=? AND preheader=? AND test_hash=?)").bind(id,id,c.subject,c.markdown,c.preheader,c.test_hash),
+   env.DB.prepare("UPDATE campaigns SET state='sending',postal_address=?,started_at=?,updated_at=? WHERE id=? AND state='draft' AND subject=? AND markdown=? AND preheader=? AND test_hash=?").bind(config.postal_address,now(),now(),id,c.subject,c.markdown,c.preheader,c.test_hash)
+  ]);
+  const started=await env.DB.prepare('SELECT state,subject,markdown,preheader FROM campaigns WHERE id=?').bind(id).first();
+  if(!started||started.state==='draft'||started.subject!==c.subject||started.markdown!==c.markdown||started.preheader!==c.preheader)bad('Draft changed. Reload, send a new test, and review it again.',409);
+  return json({ok:true});
  }
  bad('Not found.',404);
 }
