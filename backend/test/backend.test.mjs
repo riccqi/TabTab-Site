@@ -72,22 +72,18 @@ test('unsubscribe GET is safe for scanners; POST persists and invalidates confir
   assert.equal((await worker.fetch(request(`/confirm?token=${stale}`,''),env)).status,400);
   assert.equal((await worker.fetch(request(`/unsubscribe?token=${value}x`,''),env)).status,400);
 });
-test('signup confirms ownership, throttles repeat email requests and supports explicit resubscribe',async(t)=>{
-  const {env,sql}=setup();const messages=[];
-  t.mock.method(globalThis,'fetch',async(url,options)=>{messages.push(JSON.parse(options.body));return Response.json({id:'mail-1'});});
+test('signup activates immediately without email, preserves suppression, and supports explicit resubscribe',async(t)=>{
+  const {env,sql}=setup();let sends=0;
+  t.mock.method(globalThis,'fetch',async()=>{sends++;throw new Error('Signup must not send email');});
   const signup=()=>worker.fetch(request('/subscribe',{email:'reader@example.com',consent:'yes'},{Origin:env.SITE_ORIGIN}),env);
-  assert.equal((await signup()).status,200);await signup();assert.equal(messages.length,1);
-  assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'pending');
-  const link=messages[0].text.match(/https:\/\/\S+/)[0];
-  await worker.fetch(new Request(link),env);
-  assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'pending');
-  assert.equal((await worker.fetch(new Request(link,{method:'POST'}),env)).status,200);
-  assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'subscribed');
-  assert.equal((await worker.fetch(new Request(link,{method:'POST'}),env)).status,400);
-  await seed(env,{status:'unsubscribed'});sql.prepare('UPDATE contacts SET confirmation_sent_at=NULL').run();
-  await signup();assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'unsubscribed');
-  const next=messages[1].text.match(/https:\/\/\S+/)[0];await worker.fetch(new Request(next,{method:'POST'}),env);
-  assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'subscribed');
+  assert.equal((await signup()).status,200);
+  const first=sql.prepare('SELECT * FROM contacts').get();
+  assert.equal(first.status,'subscribed');assert.equal(first.consent_source,'website-single-opt-in');
+  assert.equal(first.subscription_basis,'website_single_opt_in');assert.equal(first.confirmation_nonce,null);
+  await signup();assert.equal(sql.prepare('SELECT consent_at FROM contacts').get().consent_at,first.consent_at);
+  await seed(env,{status:'unsubscribed'});await signup();assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'subscribed');
+  await seed(env,{status:'suppressed'});await signup();assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'suppressed');
+  assert.equal(sends,0);
 });
 test('signup rejects wrong origins and oversized bodies; API admin access is private',async()=>{
   const {env}=setup();

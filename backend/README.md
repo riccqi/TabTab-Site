@@ -27,7 +27,7 @@ Resend is only the delivery service. Markdown is rendered by a bundled parser; t
 7. In Lemon Squeezy (live mode), create a webhook to
    `https://updates.tabtabapp.net/webhooks/lemonsqueezy`, event `order_created`.
    Test with a signed fixture and check D1; test-mode orders are intentionally ignored.
-8. Verify `/health` reports `signup_ready: true`; test a signup and confirmation
+8. Verify `/health` reports `signup_ready: true`; test an immediate signup
    with your own address, then unsubscribe. **Do not publish the changed website
    until the backend and verified sending domain work.** The live Formspree form
    continues working until the site changes are published.
@@ -107,7 +107,7 @@ there is no blind retry after the provider's idempotency window. After confirmin
 an email was not accepted, an operator can remove just that delivery row in D1
 and rerun. Never reset a delivery whose provider acceptance is unknown.
 
-Confirmations use expiring signed links and require POST to activate; GETs are
+Website signups activate immediately through the Subscribe action and send no confirmation email. New evidence is labeled `website-single-opt-in`, not verified ownership. Existing pending contacts are not bulk activated. Legacy confirmation links remain supported and require POST; GETs are
 safe for mail scanners. Unsubscribe links do not expire and POST works for mail
 clients' one-click unsubscribe. Hard delivery failures and complaints suppress
 the address through a signed Resend webhook.

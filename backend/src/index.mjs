@@ -5,8 +5,8 @@ import { dashboardHTML, dashboardCSS, dashboardScript } from './dashboard-ui.mjs
 import { renderEmail } from './email-template.mjs';
 import { reserveEmail, settings } from './mail-budget.mjs';
 
-const CONSENT = 'tabtab-updates-v2';
-const okMessage = 'If this address can subscribe, a confirmation email is on its way. Please check your inbox.';
+const CONSENT = 'tabtab-updates-single-opt-in-v3';
+const okMessage = 'Thanks for subscribing! You’ll receive occasional TabTab updates. Unsubscribe at any time.';
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const now = () => new Date().toISOString();
 const json = (value, status = 200) => Response.json(value, { status });
@@ -49,7 +49,7 @@ export async function sendEmail(env, message, idempotencyKey) {
 
 async function subscribe(request, env) {
   if (request.headers.get('origin') !== env.SITE_ORIGIN) fail('This form must be submitted from the TabTab website.', 403);
-  required(env, ['TOKEN_SECRET','PUBLIC_URL','RESEND_API_KEY','FROM_EMAIL','SIGNUP_LIMITER']);
+  required(env, ['SIGNUP_LIMITER']);
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   if (!(await env.SIGNUP_LIMITER.limit({ key:ip })).success) fail('Too many attempts. Please wait a minute and try again.', 429);
   const raw = await bodyText(request, 4096);
@@ -60,27 +60,14 @@ async function subscribe(request, env) {
   if (!email || data.consent !== 'yes') fail('Enter a valid email and agree to receive TabTab updates.');
   const name = typeof data.name === 'string' ? data.name.trim().slice(0,120) : '';
   await env.DB.batch(contactStatements(env.DB, { email, name, source:'website', external_id:email, status:'customer' }));
-  // Atomic claim prevents concurrent requests and throttles by email across all IPs.
-  const nonce = crypto.randomUUID();
-  const row = await env.DB.prepare(`UPDATE contacts SET confirmation_nonce=?,confirmation_sent_at=?,
-    status=CASE WHEN status='customer' THEN 'pending' ELSE status END,updated_at=?
-    WHERE email=? AND status NOT IN ('subscribed','suppressed')
-    AND (confirmation_sent_at IS NULL OR confirmation_sent_at<?) RETURNING id`)
-    .bind(nonce,Date.now(),now(),email,Date.now()-3600000).first();
-  if (row) {
-    const value = await token(env.TOKEN_SECRET, { id:row.id, purpose:'confirm', nonce, exp:Date.now()+86400000 });
-    const url = `${env.PUBLIC_URL}/confirm?token=${encodeURIComponent(value)}`;
-    try {
-      await sendEmail(env, { to:email, subject:'Confirm your TabTab updates',
-        text:`Confirm that you would like TabTab updates:\n\n${url}\n\nThis link expires in 24 hours. If you did not sign up, ignore this email.`,
-        html:`<p>Confirm that you would like TabTab updates.</p><p><a href="${esc(url)}">Confirm my subscription</a></p><p>This link expires in 24 hours. If you did not sign up, ignore this email.</p>`
-      }, `confirmation/${row.id}/${nonce}`);
-    } catch (error) {
-      await env.DB.prepare('UPDATE contacts SET confirmation_sent_at=NULL WHERE id=? AND confirmation_nonce=?').bind(row.id,nonce).run();
-      throw error;
-    }
-  }
-  return type.includes('application/json') ? json({ message:okMessage }) : page('Check your inbox',okMessage);
+  // The explicit Subscribe action records single opt-in, not verified email ownership.
+  // Repeated submissions preserve existing evidence; suppressed addresses never reactivate.
+  await env.DB.prepare(`UPDATE contacts SET status='subscribed',consent_at=?,
+    consent_source='website-single-opt-in',consent_version=?,subscription_basis='website_single_opt_in',
+    unsubscribed_at=NULL,confirmation_nonce=NULL,confirmation_sent_at=NULL,updated_at=?
+    WHERE email=? AND status NOT IN ('subscribed','suppressed')`)
+    .bind(now(),CONSENT,now(),email).run();
+  return type.includes('application/json') ? json({ message:okMessage }) : page('Thanks for subscribing',okMessage);
 }
 
 async function preference(request, env, purpose) {
