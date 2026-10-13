@@ -12,6 +12,7 @@ function setup() {
   sql.exec(readFileSync(new URL('../migrations/0002_subscription_basis.sql',import.meta.url),'utf8'));
   sql.exec(readFileSync(new URL('../migrations/0003_dashboard.sql',import.meta.url),'utf8'));
   sql.exec(readFileSync(new URL('../migrations/0004_uncapped_sending.sql',import.meta.url),'utf8'));
+  sql.exec(readFileSync(new URL('../migrations/0005_shared_outbox.sql',import.meta.url),'utf8'));
   const wrap = (query,args=[]) => ({
     bind(...values){return wrap(query,values);},
     async first(){return sql.prepare(query).get(...args)||null;},
@@ -23,6 +24,13 @@ function setup() {
 }
 const request=(path,body,headers={})=>new Request(`https://updates.tabtabapp.net${path}`,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:typeof body==='string'?body:JSON.stringify(body)})});
 const contact=(extra={})=>({email:'reader@example.com',name:'Reader',source:'formspree',external_id:'1',status:'subscribed',consent_at:'2026-01-01T00:00:00Z',consent_source:'Website signup',...extra});
+const unlock=sql=>sql.exec('UPDATE send_lock SET next_at=0');
+// Mock Resend: batch requests get one id per email; single sends get one id.
+function mockResend(handler){const original=globalThis.fetch,calls=[];globalThis.fetch=async(url,options)=>{const call={url:String(url),key:options.headers['Idempotency-Key'],body:JSON.parse(options.body)};calls.push(call);if(handler)return handler(call);return call.url.endsWith('/emails/batch')?Response.json({data:call.body.map((_,i)=>({id:`id-${calls.length}-${i}`}))}):Response.json({id:`id-${calls.length}`});};return {calls,restore:()=>{globalThis.fetch=original;}};}
+async function startCampaign(env,sql,count,id='background'){
+ const date=new Date().toISOString();sql.prepare("INSERT INTO campaigns(id,subject,markdown,preheader,state,postal_address,created_at,updated_at,started_at) VALUES (?,'Release','# Hello <script>','Preview','sending','PO Box 1',?,?,?)").run(id,date,date,date);
+ for(let i=0;i<count;i++){const row=await seed(env,{email:`reader${i}@${id}.example.com`,external_id:id+i});sql.prepare("INSERT INTO deliveries(id,campaign_id,contact_id,kind,available_at) VALUES (?,?,?,'announcement',0)").run(`${id}-${String(i).padStart(4,'0')}`,id,row.id);}
+}
 async function seed(env,extra={}){await env.DB.batch(contactStatements(env.DB,contact(extra)));return env.DB.prepare('SELECT * FROM contacts WHERE email=?').bind(extra.email||'reader@example.com').first();}
 
 test('merges emails and preserves unsubscribe/suppression against purchases and imports',async()=>{
@@ -95,15 +103,12 @@ test('signup rejects wrong origins and oversized bodies; API admin access is pri
   assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
   assert.equal(response.headers.has('Access-Control-Allow-Origin'),false);
 });
-test('release sending skips opt-outs, prevents duplicates and includes one-click headers',async(t)=>{
-  const {env}=setup();const row=await seed(env);const messages=[];
-  t.mock.method(globalThis,'fetch',async(url,options)=>{messages.push(JSON.parse(options.body));return Response.json({id:'release-1'});});
-  const send=()=>worker.fetch(request('/admin/send',{campaign_id:'v1',contact_id:row.id,subject:'New release',text:'Hello <script>'},{Authorization:'Bearer admin-secret'}),env);
-  assert.equal((await send()).status,200);await send();assert.equal(messages.length,1);
-  assert.equal(messages[0].headers['List-Unsubscribe-Post'],'List-Unsubscribe=One-Click');
-  assert.ok(messages[0].html.includes('&lt;script&gt;'));
-  await seed(env,{status:'unsubscribed'});await send();assert.equal(messages.length,1);
+test('the legacy one-off send endpoint is gone; campaigns are the only bulk sending path',async()=>{
+  const {env}=setup();const row=await seed(env);
+  const response=await worker.fetch(request('/admin/send',{campaign_id:'v1',contact_id:row.id,subject:'New release',text:'Hello'},{Authorization:'Bearer admin-secret'}),env);
+  assert.equal(response.status,404);
 });
+
 test('Resend suppression webhook is signed and refuses stale timestamps',async()=>{
  for (const from of ['TabTab <updates@tabtabapp.net>','TabTab <richard@tabtabapp.net>','richard@tabtabapp.net']) {
   const {env,sql}=setup();await seed(env);
@@ -135,7 +140,7 @@ test('dashboard protects data, prevents cross-origin mutations, and uses one-tim
   assert.equal((await worker.fetch(dash('/overview',undefined,''),env)).status,401);
   const denied=new Request('https://updates.tabtabapp.net/dashboard/api/settings',{method:'POST',headers:{Authorization:'Bearer admin-secret',Origin:'https://evil.example'},body:'{}'});
   assert.equal((await worker.fetch(denied,env)).status,403);
-  const login=await (await worker.fetch(dash('/login',{},''),env)).json();assert.equal(mail.to,'owner@example.com');const code=mail.text.match(/\b\d{8}\b/)[0];
+  const login=await (await worker.fetch(dash('/login',{},''),env)).json();assert.deepEqual(mail.to,['owner@example.com']);const code=mail.text.match(/\b\d{8}\b/)[0];
   assert.equal((await worker.fetch(dash('/verify',{id:login.id,code:'11111111'},''),env)).status,401);
   const verified=await worker.fetch(dash('/verify',{id:login.id,code},''),env);assert.equal(verified.status,200);const cookie=verified.headers.get('set-cookie');assert.match(cookie,/HttpOnly; Secure; SameSite=Strict/);
   assert.equal((await worker.fetch(dash('/verify',{id:login.id,code},''),env)).status,401);
@@ -149,10 +154,10 @@ test('Markdown renderer escapes raw HTML and unsafe URLs while preserving useful
  assert.match(html,/<strong>Bold<\/strong>/);assert.match(html,/href="https:\/\/example.com\//);assert.doesNotMatch(html,/<script|href="javascript:|<img src=x/);assert.match(html,/&lt;img/);assert.match(html,/<th /);assert.match(html,/Address &lt;test&gt;/);
 });
 test('drafts require an exact-content test, snapshot audience, lock content, and respect later opt-outs',async()=>{
- const {env,sql}=setup();env.DASHBOARD_EMAIL='owner@example.com';await seed(env);const {runCampaigns}=await import('../src/dashboard-api.mjs');const {sendReleaseBatch}=await import('../src/index.mjs');
- const original=globalThis.fetch;let sends=0;globalThis.fetch=async(url,options)=>{if(String(url).endsWith('/emails/batch')){const batch=JSON.parse(options.body);return Response.json({data:batch.map(()=>({id:'test-'+(++sends)}))});}sends++;return Response.json({id:'test-'+sends});};
+ const {env,sql}=setup();env.DASHBOARD_EMAIL='owner@example.com';await seed(env);const {drain}=await import('../src/outbox.mjs');
+ const resend=mockResend();
  try{
-  await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City',daily_limit:0}),env);
+  await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City'}),env);
   const d={id:'release-test',subject:'A release',markdown:'# Hello\n\n**New things**',preheader:'Fresh improvements'};
   assert.equal((await worker.fetch(dash('/campaign',d),env)).status,200);
   assert.equal((await worker.fetch(dash('/campaign/release-test/start',{confirmation:d.subject}),env)).status,400);
@@ -165,54 +170,51 @@ test('drafts require an exact-content test, snapshot audience, lock content, and
   assert.equal((await worker.fetch(dash('/campaign',d),env)).status,409);
   await seed(env,{email:'later@example.com',external_id:'later'});
   sql.prepare("UPDATE contacts SET status='unsubscribed' WHERE email='reader@example.com'").run();
-  await runCampaigns(env,{sendReleaseBatch});
-  assert.equal(sends,2);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='release-test'").get().state,'completed');assert.equal(sql.prepare('SELECT COUNT(*) n FROM campaign_recipients').get().n,1);assert.equal(sql.prepare('SELECT state FROM campaign_recipients').get().state,'skipped');
+  await drain(env);
+  assert.equal(resend.calls.length,2);assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries").get().n,1);assert.equal(sql.prepare('SELECT status,error_code FROM deliveries').get().error_code,'not_subscribed');
+  const overview=await (await worker.fetch(dash('/overview'),env)).json();assert.equal(overview.campaigns[0].state,'completed');assert.equal(overview.campaigns[0].skipped,1);
   const list=await (await worker.fetch(dash('/contacts?q=reader&status=unsubscribed'),env)).json();assert.equal(list.total,1);assert.equal(list.contacts[0].email,'reader@example.com');
- }finally{globalThis.fetch=original;}
+ }finally{resend.restore();}
 });
-test('daily quota pauses before provider contact and does not leave a failed delivery lock',async()=>{
- const {env,sql}=setup(),row=await seed(env);const {sendRelease}=await import('../src/index.mjs');
- sql.prepare('UPDATE dashboard_settings SET daily_limit=100').run();sql.prepare('INSERT INTO email_usage(day,attempts) VALUES (?,80)').run(new Date().toISOString().slice(0,10));
- const body={campaign_id:'quota',contact_id:row.id,subject:'Update',markdown:'# Hello',preheader:''};
- const original=globalThis.fetch;let sent;globalThis.fetch=async(_url,options)=>{sent=JSON.parse(options.body);return Response.json({id:'quota-test'});};
- try{
-  await assert.rejects(()=>sendRelease(request('/admin/send',body),env),e=>e.quota===true);assert.equal(sent,undefined);assert.equal(sql.prepare('SELECT COUNT(*) n FROM deliveries').get().n,0);
-  sql.prepare('UPDATE email_usage SET attempts=0').run();await sendRelease(request('/admin/send',body),env);assert.match(sent.html,/<h1/);assert.match(sent.headers['List-Unsubscribe'],/unsubscribe\?token=/);await sendRelease(request('/admin/send',body),env);assert.equal(sql.prepare('SELECT attempts FROM email_usage').get().attempts,1);
- }finally{globalThis.fetch=original;}
-});
-test('background sender sends 100 per run in one batch within the D1 Free query limit and resumes without duplicate sends',async()=>{
- const {env,sql}=setup();const {runCampaigns}=await import('../src/dashboard-api.mjs'),{sendReleaseBatch}=await import('../src/index.mjs');
- const date=new Date().toISOString();sql.prepare("INSERT INTO campaigns(id,subject,markdown,preheader,state,postal_address,created_at,updated_at,started_at) VALUES ('background','Release','# Hello','Preview','sending','PO Box 1',?,?,?)").run(date,date,date);
- for(let i=0;i<105;i++){const row=await seed(env,{email:`reader${i}@example.com`,external_id:String(i)});sql.prepare("INSERT INTO campaign_recipients(campaign_id,contact_id) VALUES ('background',?)").run(row.id);}
- const original=globalThis.fetch;let sent=0,requests=0,keys=[],batch;globalThis.fetch=async(url,options)=>{requests++;assert.match(String(url),/\/emails\/batch$/);keys.push(options.headers['Idempotency-Key']);batch=JSON.parse(options.body);sent+=batch.length;return Response.json({data:batch.map((_,i)=>({id:`background-${sent}-${i}`}))});};
- const prepare=env.DB.prepare;let queries=0;env.DB.prepare=(...args)=>{queries++;return prepare(...args);};
- try{
-  await runCampaigns(env,{sendReleaseBatch});assert.equal(sent,100);assert.equal(requests,1);assert.ok(queries<=50,`Used ${queries} D1 queries`);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='background'").get().state,'sending');
-  assert.equal(new Set(batch.map(m=>m.to)).size,100);assert.ok(batch.every(m=>m.headers['List-Unsubscribe'].includes('/unsubscribe?token=')&&m.html.includes(m.headers['List-Unsubscribe'].slice(1,-1).replaceAll('&','&amp;'))));
-  assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries WHERE state='sent' AND provider_id LIKE 'background-%'").get().n,100);assert.equal(sql.prepare('SELECT attempts FROM email_usage').get().attempts,100);
-  queries=0;await runCampaigns(env,{sendReleaseBatch});assert.equal(sent,105);assert.equal(requests,2);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='background'").get().state,'completed');await runCampaigns(env,{sendReleaseBatch});assert.equal(sent,105);
-  assert.equal(new Set(keys).size,2);
- }finally{globalThis.fetch=original;}
+test('webhook acceptance events settle a held delivery, but only for TabTab mail',async()=>{
+ const {env,sql}=setup();await startCampaign(env,sql,1,'held');sql.prepare("UPDATE deliveries SET status='ambiguous',error_code='transport_uncertain'").run();
+ const post=async event=>{const raw=JSON.stringify(event),timestamp=Math.floor(Date.now()/1000),id='evt-'+Math.random();const signature=Buffer.from(await hmac(new TextEncoder().encode('test'),`${id}.${timestamp}.${raw}`)).toString('base64');return worker.fetch(request('/webhooks/resend',raw,{'svix-id':id,'svix-timestamp':String(timestamp),'svix-signature':`v1,${signature}`}),env);};
+ const event=from=>({type:'email.delivered',data:{from,email_id:'resend-1',to:['reader0@held.example.com'],tags:[{name:'app',value:'tabtab'},{name:'delivery_id',value:'held-0000'}]}});
+ assert.equal((await (await post(event('OpenCam <richard@opencam.app>'))).json()).ignored,true);assert.equal(sql.prepare('SELECT status FROM deliveries').get().status,'ambiguous');
+ assert.equal((await post(event('TabTab <richard@tabtabapp.net>'))).status,200);
+ assert.deepEqual({...sql.prepare('SELECT status,message_id FROM deliveries').get()},{status:'sent',message_id:'resend-1'});
 });
 
-test('batch matches single-send content, requeues on Resend throttling, and pauses on uncertain outcomes',async()=>{
- const {env,sql}=setup();const {runCampaigns}=await import('../src/dashboard-api.mjs'),{sendReleaseBatch,sendRelease}=await import('../src/index.mjs');
- const date=new Date().toISOString();sql.prepare("INSERT INTO campaigns(id,subject,markdown,preheader,state,postal_address,created_at,updated_at,started_at) VALUES ('throttle','Release','# Hello','Preview','sending','PO Box 1',?,?,?)").run(date,date,date);
- const rows=[];for(let i=0;i<3;i++){const row=await seed(env,{email:`t${i}@example.com`,external_id:'t'+i});rows.push(row);sql.prepare("INSERT INTO campaign_recipients(campaign_id,contact_id) VALUES ('throttle',?)").run(row.id);}
- const original=globalThis.fetch;let mode='throttle',single;
- globalThis.fetch=async(url,options)=>{if(!String(url).endsWith('/batch')){single=JSON.parse(options.body);return Response.json({id:'single'});}if(mode==='throttle')return new Response('{}',{status:429});if(mode==='down')return new Response('{}',{status:502});const b=JSON.parse(options.body);return Response.json({data:b.map((_,i)=>({id:'ok-'+i}))});};
+test('shared outbox sends 100 per minute in one batch within the D1 Free query limit, without duplicates',async()=>{
+ const {env,sql}=setup();const {drain}=await import('../src/outbox.mjs');await startCampaign(env,sql,105);
+ const resend=mockResend(),prepare=env.DB.prepare;let queries=0;env.DB.prepare=(...args)=>{queries++;return prepare(...args);};
  try{
-  await runCampaigns(env,{sendReleaseBatch});
-  assert.equal(sql.prepare("SELECT COUNT(*) n FROM campaign_recipients WHERE state='queued'").get().n,3);assert.equal(sql.prepare('SELECT COUNT(*) n FROM deliveries').get().n,0);
-  assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='throttle'").get().state,'sending');assert.match(sql.prepare("SELECT last_error FROM campaigns WHERE id='throttle'").get().last_error,/rate limit/);
-  assert.equal(sql.prepare('SELECT attempts FROM email_usage').get().attempts,0);
-  // A single send of the same recipient produces the identical content hash the batch would use.
-  await sendRelease(request('/admin/send',{campaign_id:'throttle',contact_id:rows[0].id,subject:'Release',markdown:'# Hello',preheader:'Preview'}),{...env,POSTAL_ADDRESS:'PO Box 1'});
-  mode='down';await runCampaigns(env,{sendReleaseBatch});
-  assert.equal(sql.prepare("SELECT state FROM campaign_recipients WHERE contact_id=?").get(rows[0].id).state,'sent');
-  assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries WHERE state='uncertain'").get().n,2);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='throttle'").get().state,'paused');
-  assert.equal(sql.prepare("SELECT COUNT(*) n FROM campaign_recipients WHERE state='uncertain'").get().n,2);
- }finally{globalThis.fetch=original;}
+  await drain(env);assert.equal(resend.calls.length,1);assert.ok(queries<=50,`Used ${queries} D1 queries`);
+  const batch=resend.calls[0].body;assert.match(resend.calls[0].url,/\/emails\/batch$/);assert.equal(batch.length,100);assert.equal(new Set(batch.map(m=>m.to[0])).size,100);
+  assert.ok(batch.every(m=>m.from==='TabTab <updates@example.com>'&&m.tags.some(t=>t.name==='app'&&t.value==='tabtab')&&m.headers['List-Unsubscribe-Post']==='List-Unsubscribe=One-Click'&&m.html.includes(m.headers['List-Unsubscribe'].slice(1,-1))&&!m.html.includes('<script>')));
+  assert.equal(new Set(batch.map(m=>m.headers['List-Unsubscribe'])).size,100);
+  await drain(env);assert.equal(resend.calls.length,1,'one batch per minute');
+  unlock(sql);await drain(env);assert.equal(resend.calls.length,2);assert.equal(resend.calls[1].body.length,5);
+  unlock(sql);await drain(env);assert.equal(resend.calls.length,2);
+  assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries WHERE status='sent' AND message_id IS NOT NULL").get().n,105);
+  const overview=await (await worker.fetch(dash('/overview'),env)).json();assert.equal(overview.usage,105);assert.deepEqual([overview.campaigns[0].state,overview.campaigns[0].sent,overview.campaigns[0].remaining],['completed',105,0]);
+ }finally{resend.restore();env.DB.prepare=prepare;}
+});
+
+test('Resend throttling retries with backoff, uncertain outcomes are held, and paused campaigns are not claimed',async()=>{
+ const {env,sql}=setup();const {drain}=await import('../src/outbox.mjs');await startCampaign(env,sql,3,'throttle');
+ let status=429;const resend=mockResend(()=>new Response('{}',{status}));
+ try{
+  await drain(env);assert.equal(resend.calls.length,1);
+  assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries WHERE status='retry' AND attempts=1 AND available_at>unixepoch()").get().n,3);
+  unlock(sql);await drain(env);assert.equal(resend.calls.length,1,'backoff holds the retry');
+  sql.prepare('UPDATE deliveries SET available_at=0').run();status=502;unlock(sql);await drain(env);assert.equal(resend.calls.length,2);
+  assert.equal(resend.calls[0].key,resend.calls[1].key,'same payload keeps the same idempotency key');
+  assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries WHERE status='ambiguous'").get().n,3);
+  unlock(sql);await drain(env);assert.equal(resend.calls.length,2,'uncertain outcomes are never resent automatically');
+  await startCampaign(env,sql,2,'paused');sql.prepare("UPDATE campaigns SET state='paused' WHERE id='paused'").run();
+  unlock(sql);await drain(env);assert.equal(resend.calls.length,2);assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries WHERE campaign_id='paused' AND status='queued' AND attempts=0").get().n,2);
+ }finally{resend.restore();}
 });
 
 test('Turnstile rejects missing, forged, expired, wrong-host and wrong-action tokens before storing a contact',async(t)=>{
@@ -242,26 +244,22 @@ test('central studio credential is dashboard-only and legacy dashboard logins ar
 
 test('a concurrent draft edit cannot bypass exact-content test before launch',async()=>{
  const {env,sql}=setup();await seed(env);
- await worker.fetch(dash('/settings',{postal_address:'Test address',daily_limit:0}),env);
+ await worker.fetch(dash('/settings',{postal_address:'Test address'}),env);
  const d={id:'concurrent-edit',subject:'Tested subject',markdown:'Tested body',preheader:''};
  await worker.fetch(dash('/campaign',d),env);
  const {sha256}=await import('../src/crypto.mjs');
- const {settings}=await import('../src/mail-budget.mjs');const config=await settings(env);
+ const {settings}=await import('../src/dashboard-api.mjs');const config=await settings(env);
  sql.prepare('UPDATE campaigns SET test_hash=? WHERE id=?').run(await sha256(JSON.stringify([d.subject,d.markdown,d.preheader,config.postal_address])),d.id);
  const batch=env.DB.batch;
  env.DB.batch=async statements=>{sql.prepare("UPDATE campaigns SET subject='Untested edit',test_hash=NULL WHERE id=?").run(d.id);return batch(statements);};
  const result=await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env);
- assert.equal(result.status,409);assert.equal(sql.prepare('SELECT state FROM campaigns WHERE id=?').get(d.id).state,'draft');assert.equal(sql.prepare('SELECT COUNT(*) n FROM campaign_recipients').get().n,0);
+ assert.equal(result.status,409);assert.equal(sql.prepare('SELECT state FROM campaigns WHERE id=?').get(d.id).state,'draft');assert.equal(sql.prepare('SELECT COUNT(*) n FROM deliveries').get().n,0);
 });
 
-test('uncapped sending ignores the daily counter and settings only accept no cap',async()=>{
- const {env,sql}=setup(),row=await seed(env);const {sendRelease}=await import('../src/index.mjs');
- sql.prepare('INSERT INTO email_usage(day,attempts) VALUES (?,10000)').run(new Date().toISOString().slice(0,10));
- const original=globalThis.fetch;let sends=0;globalThis.fetch=async()=>{sends++;return Response.json({id:'uncapped-'+sends});};
- try{
-  await sendRelease(request('/admin/send',{campaign_id:'uncapped',contact_id:row.id,subject:'Update',markdown:'# Hello',preheader:''}),env);
-  assert.equal(sends,1);assert.equal(sql.prepare('SELECT attempts FROM email_usage').get().attempts,10001);
-  assert.equal((await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City',daily_limit:5000,paid_plan_confirmed:true}),env)).status,400);
-  assert.equal((await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City',daily_limit:0}),env)).status,200);
- }finally{globalThis.fetch=original;}
+test('settings only hold the mailing address; there is no sending plan or daily cap',async()=>{
+ const {env,sql}=setup();
+ assert.equal((await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City'}),env)).status,200);
+ assert.equal(sql.prepare('SELECT postal_address FROM dashboard_settings').get().postal_address,'PO Box 1, City');
+ assert.equal((await worker.fetch(dash('/settings',{postal_address:42}),env)).status,400);
+ const overview=await (await worker.fetch(dash('/overview'),env)).json();assert.deepEqual(overview.settings,{postal_address:'PO Box 1, City'});assert.equal(overview.usage,0);
 });

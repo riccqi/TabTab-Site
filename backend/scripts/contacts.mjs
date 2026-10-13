@@ -28,24 +28,6 @@ if (command === 'import') {
   const rows=await allContacts();
   await writeFile(file,JSON.stringify(rows,null,2)+'\n',{mode:0o600,flag:'wx'});
   console.log(`Exported ${rows.length} contacts.`);
-} else if (command === 'release') {
-  const release=JSON.parse(await readFile(file,'utf8'));
-  if (!release.campaign_id || !release.subject || !release.text) throw new Error('Need campaign_id, subject and text.');
-  const rows=(await allContacts()).filter(r=>r.status==='subscribed');
-  const limit=Number(process.env.TABTAB_SEND_LIMIT || '80');
-  if (!Number.isInteger(limit) || limit<1) throw new Error('Invalid TABTAB_SEND_LIMIT.');
-  console.log({campaign:release.campaign_id,subject:release.subject,eligible:rows.length,maximumNewSends:limit});
-  if (!process.argv.includes('--send')) console.log('Dry run. Review the release, then add --send. Free plan: keep total API sends, including confirmations, under 100/day.');
-  else {
-    let sent=0;
-    for(const row of rows) {
-      const result=await api('/admin/send',{...release,contact_id:row.id});
-      if(result.sent) sent++;
-      if(sent>=limit) break;
-      await new Promise(resolve=>setTimeout(resolve,600));
-    }
-    console.log({sent});
-  }
 } else {
-  console.log('Usage: node backend/scripts/contacts.mjs import FILE.json [--apply] | export NEW_FILE.json | release RELEASE.json [--send]');
+  console.log('Usage: node backend/scripts/contacts.mjs import FILE.json [--apply] | export NEW_FILE.json');
 }

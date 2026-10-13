@@ -1,9 +1,9 @@
-import { sha256, token, verifyToken, verifyLemon, verifyResend } from './crypto.mjs';
+import { sha256, verifyToken, verifyLemon, verifyResend } from './crypto.mjs';
 import { normalizeEmail, cleanContact, contactStatements } from './store.mjs';
-import { dashboardAPI, runCampaigns } from './dashboard-api.mjs';
+import { dashboardAPI } from './dashboard-api.mjs';
 import { dashboardHTML, dashboardCSS, dashboardScript } from './dashboard-ui.mjs';
-import { renderEmail } from './email-template.mjs';
-import { reserveEmail, refundEmail, settings } from './mail-budget.mjs';
+import { sendEmail, drain } from './outbox.mjs';
+import { reconcileStatement } from '@riccqi/email-studio/outbox';
 
 const CONSENT = 'tabtab-updates-single-opt-in-v3';
 const okMessage = 'Thanks for subscribing! You’ll receive occasional TabTab updates. Unsubscribe at any time.';
@@ -33,40 +33,6 @@ async function bodyText(request, max = 65536) {
   return new TextDecoder().decode(bytes);
 }
 function parseJSON(body) { try { return JSON.parse(body); } catch { fail('Invalid JSON.'); } }
-
-// Resend accepts up to 100 emails per batch request. The key covers the exact payload, so a
-// retried request cannot send twice; uncertain outcomes are never retried automatically.
-export async function sendEmailBatch(env, messages, keyPrefix) {
-  required(env, ['RESEND_API_KEY','FROM_EMAIL']);
-  await reserveEmail(env,true,messages.length);
-  const body = JSON.stringify(messages.map(message => ({ from:env.FROM_EMAIL, reply_to:env.REPLY_TO, ...message })));
-  const response = await fetch('https://api.resend.com/emails/batch', {
-    method:'POST', signal: AbortSignal.timeout(15000),
-    headers: { Authorization:`Bearer ${env.RESEND_API_KEY}`, 'Content-Type':'application/json', 'Idempotency-Key':`${keyPrefix}/${await sha256(body)}` },
-    body
-  });
-  if (response.status === 429) {
-    await refundEmail(env,messages.length);
-    throw Object.assign(new Error('Resend rate limit reached. Sending resumes next minute.'), { status:429, quota:true });
-  }
-  if (!response.ok) throw Object.assign(new Error('Email delivery failed. Please try again later.'), { status:503, providerStatus:response.status });
-  const data = (await response.json().catch(() => null))?.data;
-  if (!Array.isArray(data) || data.length !== messages.length || data.some(item => typeof item?.id !== 'string' || !item.id)) throw Object.assign(new Error('Resend returned an unexpected batch response.'), { status:503 });
-  return data.map(item => item.id);
-}
-
-export async function sendEmail(env, message, idempotencyKey) {
-  required(env, ['RESEND_API_KEY','FROM_EMAIL']);
-  await reserveEmail(env,idempotencyKey.startsWith('release/'));
-  // Resend is a delivery adapter; no contacts are stored in its marketing list.
-  const response = await fetch('https://api.resend.com/emails', {
-    method:'POST', signal: AbortSignal.timeout(15000),
-    headers: { Authorization:`Bearer ${env.RESEND_API_KEY}`, 'Content-Type':'application/json', 'Idempotency-Key':idempotencyKey },
-    body: JSON.stringify({ from:env.FROM_EMAIL, reply_to:env.REPLY_TO, ...message })
-  });
-  if (!response.ok) throw Object.assign(new Error('Email delivery failed. Please try again later.'), { status:503, providerStatus:response.status });
-  return response.json();
-}
 
 async function subscribe(request, env) {
   if (request.headers.get('origin') !== env.SITE_ORIGIN) fail('This form must be submitted from the TabTab website.', 403);
@@ -155,15 +121,20 @@ async function resendWebhook(request, env) {
   const raw = await bodyText(request);
   if (!await verifyResend(env.RESEND_WEBHOOK_SECRET,raw,request.headers)) fail('Invalid signature.',401);
   const payload = parseJSON(raw);
-  if (!['email.bounced','email.complained','email.suppressed'].includes(payload.type)) return json({ ignored:true });
   // Resend emits account-wide events; another app's complaint must not alter this list.
   const from = String(payload.data?.from || '').trim().toLowerCase();
   if (!/^(?:(?:updates|richard)@tabtabapp\.net|tabtab\s*<(?:updates|richard)@tabtabapp\.net>)$/.test(from)) return json({ ignored:true });
-  const addresses = payload.data?.to;
-  if (!Array.isArray(addresses) || addresses.length > 100) fail('Invalid recipients.');
-  const statements = addresses.map(normalizeEmail).filter(Boolean).map(email =>
-    env.DB.prepare(`UPDATE contacts SET status='suppressed',confirmation_nonce=NULL,updated_at=? WHERE email=?`).bind(now(),email));
-  if (statements.length) await env.DB.batch(statements);
+  const statements = [];
+  if (['email.bounced','email.complained','email.suppressed'].includes(payload.type)) {
+    const addresses = payload.data?.to;
+    if (!Array.isArray(addresses) || addresses.length > 100) fail('Invalid recipients.');
+    statements.push(...addresses.map(normalizeEmail).filter(Boolean).map(email =>
+      env.DB.prepare(`UPDATE contacts SET status='suppressed',confirmation_nonce=NULL,updated_at=? WHERE email=?`).bind(now(),email)));
+  }
+  const settled = reconcileStatement(env, payload);
+  if (settled) statements.push(settled);
+  if (!statements.length) return json({ ignored:true });
+  await env.DB.batch(statements);
   return json({ received:true });
 }
 
@@ -184,115 +155,18 @@ async function admin(request, env, path) {
     await env.DB.batch(records.flatMap(row=>contactStatements(env.DB,row)));
     return json({ imported:records.length });
   }
-  if (path === '/admin/send' && request.method === 'POST') return sendRelease(request,env);
   return json({ error:'Not found.' },404);
-}
-
-const UNSUBSCRIBE_TOKEN='tabtab-unsubscribe-token';
-function validateRelease(env,data){
-  required(env,['RESEND_API_KEY','TOKEN_SECRET','PUBLIC_URL','POSTAL_ADDRESS','RESEND_WEBHOOK_SECRET']);
-  const content = data?.markdown ?? data?.text;
-  if (!/^[a-zA-Z0-9._-]{1,80}$/.test(data?.campaign_id || '') || typeof data.contact_id !== 'string' || typeof data.subject !== 'string' || !data.subject.trim() || data.subject.length>200 || typeof content !== 'string' || !content.trim() || content.length>20000) fail('Invalid update message.');
-}
-// Render once per campaign; each recipient only swaps in their unsubscribe token.
-function releaseRenderer(env,data){
-  const base=`${env.PUBLIC_URL}/unsubscribe?token=`,url=base+UNSUBSCRIBE_TOKEN;
-  const template = data.markdown !== undefined ? renderEmail({...data,postalAddress:env.POSTAL_ADDRESS,unsubscribeUrl:url}) : {
-    text:`${data.text}\n\nTabTab\n${env.POSTAL_ADDRESS}\nUnsubscribe: ${url}`,
-    html:`<div style="font:16px/1.6 system-ui;max-width:600px">${data.text.split('\n\n').map(p=>`<p>${esc(p).replace(/\n/g,'<br>')}</p>`).join('')}<hr><p>TabTab<br>${esc(env.POSTAL_ADDRESS)}<br><a href="${esc(url)}">Unsubscribe</a></p></div>`
-  };
-  return async (contact)=>{
-    const value=encodeURIComponent(await token(env.TOKEN_SECRET,{ id:contact.id,purpose:'unsubscribe' }));
-    const rendered={html:template.html.replaceAll(UNSUBSCRIBE_TOKEN,value),text:template.text.replaceAll(UNSUBSCRIBE_TOKEN,value)};
-    const contentHash = await sha256(JSON.stringify([data.subject,rendered,env.FROM_EMAIL,env.POSTAL_ADDRESS]));
-    return {contentHash,message:{ to:contact.email,subject:data.subject,...rendered,headers:{ 'List-Unsubscribe':`<${base+value}>`,'List-Unsubscribe-Post':'List-Unsubscribe=One-Click' } }};
-  };
-}
-const deliveryFailure = error => error.providerStatus && error.providerStatus<500 ? 'failed' : 'uncertain';
-
-export async function sendRelease(request,env) {
-  if(!env.POSTAL_ADDRESS) env={...env,POSTAL_ADDRESS:(await settings(env)).postal_address};
-  const data = parseJSON(await bodyText(request,32768));
-  validateRelease(env,data);
-  const contact = await env.DB.prepare('SELECT id,email,status FROM contacts WHERE id=?').bind(data.contact_id).first();
-  if (!contact || contact.status !== 'subscribed') return json({ skipped:true });
-  const {contentHash,message} = await releaseRenderer(env,data)(contact);
-  const previous = await env.DB.prepare('SELECT * FROM deliveries WHERE campaign_id=? AND contact_id=?').bind(data.campaign_id,contact.id).first();
-  if (previous) {
-    if (previous.content_hash !== contentHash) fail('Campaign content changed. Use a new campaign ID.',409);
-    if (previous.state === 'sent') return json({ already_sent:true });
-    // Never blindly retry an uncertain network outcome beyond provider idempotency TTL.
-    fail('Previous delivery needs review before retrying. Check the provider delivery log.',409);
-  }
-  const claimed = await env.DB.prepare(`INSERT OR IGNORE INTO deliveries(campaign_id,contact_id,content_hash,state,attempted_at)
-    SELECT ?,id,?,'sending',? FROM contacts WHERE id=? AND status='subscribed' RETURNING contact_id`)
-    .bind(data.campaign_id,contentHash,now(),contact.id).first();
-  if (!claimed) return json({ skipped:true });
-  try {
-    const result = await sendEmail(env,message,`release/${data.campaign_id}/${contact.id}`);
-    await env.DB.prepare(`UPDATE deliveries SET state='sent',provider_id=? WHERE campaign_id=? AND contact_id=?`).bind(result.id,data.campaign_id,contact.id).run();
-    return json({ sent:true });
-  } catch(error) {
-    if (error.quota) {
-      // Quota rejection happens before contacting Resend; no delivery was attempted.
-      await env.DB.prepare("DELETE FROM deliveries WHERE campaign_id=? AND contact_id=? AND state='sending'").bind(data.campaign_id,contact.id).run();
-      throw error;
-    }
-    await env.DB.prepare(`UPDATE deliveries SET state=?,provider_id=NULL WHERE campaign_id=? AND contact_id=?`).bind(deliveryFailure(error),data.campaign_id,contact.id).run();
-    throw error;
-  }
-}
-
-// Same delivery ledger rules as sendRelease, but set-based: one Resend batch request
-// and a fixed number of D1 queries no matter how many recipients (up to 100).
-export async function sendReleaseBatch(env,campaign,contactIds) {
-  if(!env.POSTAL_ADDRESS) env={...env,POSTAL_ADDRESS:(await settings(env)).postal_address};
-  const data={campaign_id:campaign.id,contact_id:'',subject:campaign.subject,markdown:campaign.markdown,preheader:campaign.preheader};
-  validateRelease(env,data);
-  const render=releaseRenderer(env,data),results=new Map(contactIds.map(id=>[id,{state:'skipped'}])),pending=[];
-  const rows=(await env.DB.prepare(`SELECT c.id,c.email,c.status,d.state,d.content_hash FROM json_each(?) j JOIN contacts c ON c.id=j.value
-    LEFT JOIN deliveries d ON d.campaign_id=? AND d.contact_id=c.id`).bind(JSON.stringify(contactIds),campaign.id).all()).results;
-  for (const row of rows) {
-    if (row.status !== 'subscribed') continue;
-    const prepared={id:row.id,...await render(row)};
-    if (!row.state) { pending.push(prepared); continue; }
-    if (row.content_hash !== prepared.contentHash) results.set(row.id,{state:'uncertain',error:'Campaign content changed. Use a new campaign ID.'});
-    else if (row.state === 'sent') results.set(row.id,{state:'sent'});
-    else results.set(row.id,{state:'uncertain',error:'Previous delivery needs review before retrying. Check the provider delivery log.'});
-  }
-  if (!pending.length) return contactIds.map(id=>({contact_id:id,...results.get(id)}));
-  const claimed=new Set((await env.DB.prepare(`INSERT OR IGNORE INTO deliveries(campaign_id,contact_id,content_hash,state,attempted_at)
-    SELECT ?,c.id,json_extract(j.value,'$.hash'),'sending',? FROM json_each(?) j JOIN contacts c ON c.id=json_extract(j.value,'$.id') AND c.status='subscribed' RETURNING contact_id`)
-    .bind(campaign.id,now(),JSON.stringify(pending.map(p=>({id:p.id,hash:p.contentHash})))).all()).results.map(r=>r.contact_id));
-  const ready=pending.filter(p=>claimed.has(p.id)),ids=JSON.stringify(ready.map(p=>p.id));
-  if (!ready.length) return contactIds.map(id=>({contact_id:id,...results.get(id)}));
-  try {
-    const providerIds=await sendEmailBatch(env,ready.map(p=>p.message),`release-batch/${campaign.id}`);
-    await env.DB.prepare(`UPDATE deliveries SET state='sent',provider_id=json_extract(j.value,'$.provider') FROM json_each(?) j
-      WHERE deliveries.campaign_id=? AND deliveries.contact_id=json_extract(j.value,'$.id')`).bind(JSON.stringify(ready.map((p,i)=>({id:p.id,provider:providerIds[i]}))),campaign.id).run();
-    for (const p of ready) results.set(p.id,{state:'sent'});
-  } catch(error) {
-    if (error.quota) {
-      // Rejected before Resend accepted anything; release the claims so the next run retries.
-      await env.DB.prepare("DELETE FROM deliveries WHERE campaign_id=? AND state='sending' AND contact_id IN (SELECT value FROM json_each(?))").bind(campaign.id,ids).run();
-      for (const p of ready) results.set(p.id,{state:'queued',error:error.message});
-    } else {
-      await env.DB.prepare("UPDATE deliveries SET state=?,provider_id=NULL WHERE campaign_id=? AND contact_id IN (SELECT value FROM json_each(?))").bind(deliveryFailure(error),campaign.id,ids).run();
-      for (const p of ready) results.set(p.id,{state:'uncertain',error:error.message});
-    }
-  }
-  return contactIds.map(id=>({contact_id:id,...results.get(id)}));
 }
 
 export default {
   async scheduled(event,env,ctx) {
-    ctx.waitUntil(runCampaigns(env,{sendReleaseBatch}));
+    ctx.waitUntil(drain(env));
   },
   async fetch(request,env) {
     let response;
     try {
       const path = new URL(request.url).pathname;
-      if (path.startsWith('/dashboard/api/')) response = await dashboardAPI(request,env,{sendEmail,sendRelease,normalizeEmail});
+      if (path.startsWith('/dashboard/api/')) response = await dashboardAPI(request,env,{sendEmail,normalizeEmail});
       else if (['/dashboard','/dashboard/'].includes(path) && request.method === 'GET' && env.STUDIO_URL) response = new Response(null,{status:302,headers:{Location:env.STUDIO_URL}});
       else if (path === '/dashboard' && request.method === 'GET') response = new Response(dashboardHTML,{headers:{'Content-Type':'text/html; charset=utf-8'}});
       else if (path === '/dashboard/app.js' && request.method === 'GET') response = new Response(dashboardScript,{headers:{'Content-Type':'text/javascript; charset=utf-8'}});

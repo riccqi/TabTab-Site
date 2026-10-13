@@ -16,7 +16,7 @@ Resend is only the delivery service. Markdown is rendered by a bundled parser; t
 5. Add Worker secrets using `npx wrangler secret put NAME --config backend/wrangler.jsonc`:
    - `TOKEN_SECRET`: at least 32 random bytes; retain securely. Rotating it
      invalidates old unsubscribe links, so do not rotate casually.
-   - `ADMIN_TOKEN`: a separate random secret for import/export and release sends.
+   - `ADMIN_TOKEN`: a separate random secret for contact import/export.
    - `LEMONSQUEEZY_WEBHOOK_SECRET`: the same signing secret entered in Lemon Squeezy.
    - `RESEND_API_KEY`: a sending-only Resend key restricted to the verified domain.
    - `RESEND_WEBHOOK_SECRET`: the signing secret for the Resend webhook below.
@@ -82,29 +82,17 @@ later only requires another importer/webhook that writes to this same table.
 The filter uses the order's `first_order_item.product_id`, matching the current
 single-product TabTab checkout. Revisit it before enabling multi-product carts.
 
-## Sending a release
+## Sending updates
 
-Create a private JSON file with `campaign_id` (e.g. `tabtab-2.4.0`), `subject`, and
-plain `text`. The backend adds a visible unsubscribe link, one-click unsubscribe
-headers, and your mailing address. Preview with a dry run:
+Send releases and other updates from the shared email studio dashboard (below).
+The old `contacts.mjs release` command and `/admin/send` endpoint were removed so
+that every bulk email goes through the same queue.
 
-```sh
-node backend/scripts/contacts.mjs release .private/release.json
-# After reviewing the content and audience:
-node backend/scripts/contacts.mjs release .private/release.json --send
-```
-
-Default maximum is 80 new messages per invocation; set `TABTAB_SEND_LIMIT` to
-change the CLI batch size. TabTab shares OpenCam's Resend Pro account, so there is
-no daily cap (`daily_limit` 0); attempts are still counted for the dashboard. The CLI sends at less than two requests/second and stops on
-the first error. Running the same campaign again skips successful deliveries.
-Content is immutable per recipient/campaign; do not reuse an ID for a different
-release. No release is sent automatically on Git pushes.
-
-Uncertain/failed sends are held for manual inspection in the provider log;
-there is no blind retry after the provider's idempotency window. After confirming
-an email was not accepted, an operator can remove just that delivery row in D1
-and rerun. Never reset a delivery whose provider acceptance is unknown.
+Uncertain sends are held as `ambiguous` in the `deliveries` table and never retried
+automatically; a signed Resend `email.sent`/`email.delivered` webhook event settles
+them as sent. After confirming in the Resend log that an email was not accepted, an
+operator can set just that row back to `queued`. Never requeue a delivery whose
+provider acceptance is unknown.
 
 Website signups activate immediately through the Subscribe action and send no confirmation email. New evidence is labeled `website-single-opt-in`, not verified ownership. Existing pending contacts are not bulk activated. Legacy confirmation links remain supported and require POST; GETs are
 safe for mail scanners. Unsubscribe links do not expire and POST works for mail
@@ -153,19 +141,20 @@ the dashboard. The browser never receives this credential.
   audience, and queues the campaign. Content and footer are frozen when it starts.
   Pause/resume is available; an already in-flight email may finish after pausing.
 
-A Cloudflare Cron Trigger runs each minute, sending up to 100 emails per invocation
-in one Resend batch request, using about a dozen D1 queries regardless of batch size. The dashboard can be closed while sending continues.
-There is no daily cap; a list of roughly 2,300 recipients takes about 23 minutes at
-this background rate. A Resend 429 requeues the batch for the next minute; any other
-provider error or uncertain outcome pauses the campaign for review. The capped modes (100 or 5,000 attempts per UTC day) remain in
-`mail-budget.mjs` but can no longer be selected from Settings.
-All sending entrypoints share the database quota, including the original CLI.
-Provider monthly limits still apply. Uncertain provider outcomes pause the campaign
-for review; they are never blindly retried. Each recipient's status is checked again
-before delivery, so later opt-outs are honored.
+Starting a campaign queues one row per subscriber in `deliveries`. A Cloudflare Cron
+Trigger runs each minute and hands the queue to the shared outbox module
+(`@riccqi/email-studio/outbox`, the same code OpenCam uses): up to 100 emails per
+minute in one Resend batch request, about six D1 queries per run. `src/outbox.mjs`
+only decides eligibility and renders TabTab's email. The dashboard can be closed
+while sending continues. Resend Pro has no daily cap; a list of roughly 2,300
+recipients takes about 23 minutes. A Resend 429 retries with exponential backoff
+(up to five attempts); 4xx errors fail the email; uncertain outcomes are held for
+review and never resent automatically. Paused campaigns are not claimed. Each
+recipient's status is checked again right before delivery, so later opt-outs are
+honored. Provider monthly limits still apply.
 
 The dashboard stores drafts, audience snapshots, login-code hashes, session hashes,
-and usage totals in D1. It adds one bundled Markdown parser (`marked`), no external
+and the delivery queue in D1. It adds one bundled Markdown parser (`marked`), no external
 frontend/CDN dependencies, and no new third-party service. No customer campaign was
 sent as part of dashboard setup.
 

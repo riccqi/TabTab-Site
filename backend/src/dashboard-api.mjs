@@ -1,6 +1,7 @@
 import {sha256} from './crypto.mjs';
 import {renderEmail} from './email-template.mjs';
-import {settings,remainingEmails} from './mail-budget.mjs';
+import {sentLastDay} from '@riccqi/email-studio/outbox';
+export async function settings(env){return await env.DB.prepare('SELECT postal_address FROM dashboard_settings WHERE id=1').first()||{postal_address:env.POSTAL_ADDRESS||''};}
 const json=(x,status=200,headers={})=>Response.json(x,{status,headers});
 const bad=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const now=()=>new Date().toISOString();
@@ -38,8 +39,10 @@ export async function dashboardAPI(req,env,services){
  const identity=await session(req,env);if(!identity)bad('Sign in to your TabTab dashboard.',401);
  if(path==='/logout'&&req.method==='POST'){await env.DB.prepare('DELETE FROM dashboard_sessions WHERE digest=?').bind(identity).run();return json({ok:true},200,{'Set-Cookie':cookie('')});}
  if(path==='/overview'&&req.method==='GET'){
-  const [config,counts,usage,campaigns]=await Promise.all([settings(env),env.DB.prepare('SELECT status,COUNT(*) total FROM contacts GROUP BY status').all(),env.DB.prepare('SELECT attempts FROM email_usage WHERE day=?').bind(now().slice(0,10)).first(),env.DB.prepare(`SELECT c.*,COUNT(r.contact_id) total,SUM(CASE WHEN r.state='sent' THEN 1 ELSE 0 END) sent,SUM(CASE WHEN r.state='queued' OR r.state='processing' THEN 1 ELSE 0 END) remaining,SUM(CASE WHEN r.state='skipped' THEN 1 ELSE 0 END) skipped,SUM(CASE WHEN r.state IN ('failed','uncertain') THEN 1 ELSE 0 END) errors FROM campaigns c LEFT JOIN campaign_recipients r ON r.campaign_id=c.id GROUP BY c.id ORDER BY c.created_at DESC LIMIT 50`).all()]);
-  return json({email:env.DASHBOARD_EMAIL,settings:config,counts:counts.results,usage:usage?.attempts||0,campaigns:campaigns.results});
+  const [config,counts,usage,campaigns]=await Promise.all([settings(env),env.DB.prepare('SELECT status,COUNT(*) total FROM contacts GROUP BY status').all(),sentLastDay(env),env.DB.prepare(`SELECT c.*,COUNT(d.id) total,SUM(CASE WHEN d.status='sent' THEN 1 ELSE 0 END) sent,SUM(CASE WHEN d.status IN ('queued','retry','sending') THEN 1 ELSE 0 END) remaining,SUM(CASE WHEN d.status='skipped' THEN 1 ELSE 0 END) skipped,SUM(CASE WHEN d.status IN ('failed','ambiguous') THEN 1 ELSE 0 END) errors FROM campaigns c LEFT JOIN deliveries d ON d.campaign_id=c.id AND d.kind='announcement' GROUP BY c.id ORDER BY c.created_at DESC LIMIT 50`).all()]);
+  // Completion is derived from the outbox; the stored state only records draft/sending/paused.
+  for(const c of campaigns.results)if(c.state==='sending'&&!c.remaining)c.state=c.errors?'needs_review':'completed';
+  return json({email:env.DASHBOARD_EMAIL,settings:config,counts:counts.results,usage,campaigns:campaigns.results});
  }
  if(path==='/contacts'&&req.method==='GET'){
   const search=(u.searchParams.get('q')||'').slice(0,120).replace(/[\\%_]/g,x=>'\\'+x),status=u.searchParams.get('status')||'',page=Math.max(0,Math.min(100000,Number(u.searchParams.get('page'))||0));
@@ -51,8 +54,8 @@ export async function dashboardAPI(req,env,services){
   const d=await input(req);if(typeof d?.id!=='string')bad('Invalid contact.');await env.DB.prepare("UPDATE contacts SET status=CASE WHEN status='suppressed' THEN status ELSE 'unsubscribed' END,confirmation_nonce=NULL,unsubscribed_at=?,updated_at=? WHERE id=?").bind(now(),now(),d.id).run();return json({ok:true});
  }
  if(path==='/settings'&&req.method==='POST'){
-  const d=await input(req);if(typeof d?.postal_address!=='string'||d.postal_address.length>500||d.daily_limit!==0)bad('Invalid settings. TabTab uses the Resend Pro plan with no daily cap.');
-  await env.DB.prepare('UPDATE dashboard_settings SET postal_address=?,daily_limit=? WHERE id=1').bind(d.postal_address.trim(),d.daily_limit).run();return json({ok:true});
+  const d=await input(req);if(typeof d?.postal_address!=='string'||d.postal_address.length>500)bad('Invalid settings.');
+  await env.DB.prepare('UPDATE dashboard_settings SET postal_address=? WHERE id=1').bind(d.postal_address.trim()).run();return json({ok:true});
  }
  if(path==='/preview'&&req.method==='POST'){
   const d=safeDraft(await input(req)),config=await settings(env);const saved=typeof d.id==='string'?await env.DB.prepare('SELECT state,postal_address FROM campaigns WHERE id=?').bind(d.id).first():null;return json(renderEmail({...d,postalAddress:saved&&saved.state!=='draft'?saved.postal_address:config.postal_address,unsubscribeUrl:`${env.PUBLIC_URL}/unsubscribe`}));
@@ -81,7 +84,7 @@ export async function dashboardAPI(req,env,services){
   if(!env.RESEND_WEBHOOK_SECRET)bad('Bounce handling must be configured first.',503);
   // The state transition and audience snapshot are atomic. Double clicks do not rebuild the audience.
   await env.DB.batch([
-   env.DB.prepare("INSERT OR IGNORE INTO campaign_recipients(campaign_id,contact_id) SELECT ?,id FROM contacts WHERE status='subscribed' AND EXISTS (SELECT 1 FROM campaigns WHERE id=? AND state='draft' AND subject=? AND markdown=? AND preheader=? AND test_hash=?)").bind(id,id,c.subject,c.markdown,c.preheader,c.test_hash),
+   env.DB.prepare("INSERT OR IGNORE INTO deliveries(id,campaign_id,contact_id,kind,available_at) SELECT lower(hex(randomblob(16))),?,id,'announcement',? FROM contacts WHERE status='subscribed' AND EXISTS (SELECT 1 FROM campaigns WHERE id=? AND state='draft' AND subject=? AND markdown=? AND preheader=? AND test_hash=?)").bind(id,Math.floor(Date.now()/1000),id,c.subject,c.markdown,c.preheader,c.test_hash),
    env.DB.prepare("UPDATE campaigns SET state='sending',postal_address=?,started_at=?,updated_at=? WHERE id=? AND state='draft' AND subject=? AND markdown=? AND preheader=? AND test_hash=?").bind(config.postal_address,now(),now(),id,c.subject,c.markdown,c.preheader,c.test_hash)
   ]);
   const started=await env.DB.prepare('SELECT state,subject,markdown,preheader FROM campaigns WHERE id=?').bind(id).first();
@@ -89,28 +92,4 @@ export async function dashboardAPI(req,env,services){
   return json({ok:true});
  }
  bad('Not found.',404);
-}
-const CAMPAIGN_BATCH=100;
-export async function runCampaigns(env,services){
- const campaigns=await env.DB.prepare("SELECT * FROM campaigns WHERE state='sending' ORDER BY started_at LIMIT 1").all();
- if(!campaigns.results.length)return;
- const c=campaigns.results[0];
- env={...env,EMAIL_SETTINGS:await settings(env)};let blocked=false;
- // Recover interrupted runs safely: the durable delivery ledger decides whether a retry is safe.
- await env.DB.prepare("UPDATE campaign_recipients SET state='queued' WHERE campaign_id=? AND state='processing' AND claimed_at<?").bind(c.id,Date.now()-600000).run();
- const size=await remainingEmails(env,CAMPAIGN_BATCH);
- if(!size){blocked=true;await env.DB.prepare('UPDATE campaigns SET last_error=? WHERE id=?').bind('Daily sending limit reached. Sending resumes after midnight UTC.',c.id).run();}
- const claimed=size?(await env.DB.prepare(`UPDATE campaign_recipients SET state='processing',claimed_at=? WHERE campaign_id=? AND state='queued' AND contact_id IN (SELECT contact_id FROM campaign_recipients WHERE campaign_id=? AND state='queued' ORDER BY contact_id LIMIT ?) AND EXISTS(SELECT 1 FROM campaigns WHERE id=? AND state='sending') RETURNING contact_id`).bind(Date.now(),c.id,c.id,size,c.id).all()).results.map(r=>r.contact_id):[];
- if(claimed.length){
-  let results;
-  try{results=await services.sendReleaseBatch({...env,POSTAL_ADDRESS:c.postal_address},c,claimed);}
-  catch(e){results=claimed.map(contact_id=>({contact_id,state:'uncertain',error:e.message}));}
-  await env.DB.prepare(`UPDATE campaign_recipients SET state=json_extract(j.value,'$.state'),error=json_extract(j.value,'$.error') FROM json_each(?) j WHERE campaign_recipients.campaign_id=? AND campaign_recipients.contact_id=json_extract(j.value,'$.id')`)
-   .bind(JSON.stringify(results.map(r=>({id:r.contact_id,state:r.state,error:r.state==='uncertain'?r.error:null}))),c.id).run();
-  const problem=results.find(r=>r.state==='uncertain'),retry=results.find(r=>r.state==='queued');
-  if(problem){blocked=true;await env.DB.prepare("UPDATE campaigns SET state='paused',last_error=?,updated_at=? WHERE id=?").bind('Delivery needs review: '+problem.error,now(),c.id).run();}
-  else if(retry){blocked=true;await env.DB.prepare('UPDATE campaigns SET last_error=? WHERE id=?').bind(retry.error,c.id).run();}
- }
- if(!blocked)await env.DB.prepare('UPDATE campaigns SET last_error=NULL,updated_at=? WHERE id=?').bind(now(),c.id).run();
- await env.DB.prepare("UPDATE campaigns SET state=CASE WHEN EXISTS(SELECT 1 FROM campaign_recipients WHERE campaign_id=campaigns.id AND state IN ('failed','uncertain')) THEN 'needs_review' ELSE 'completed' END,updated_at=? WHERE id=? AND state='sending' AND NOT EXISTS(SELECT 1 FROM campaign_recipients WHERE campaign_id=? AND state IN ('queued','processing'))").bind(now(),c.id,c.id).run();
 }
