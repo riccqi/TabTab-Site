@@ -94,10 +94,9 @@ node backend/scripts/contacts.mjs release .private/release.json
 node backend/scripts/contacts.mjs release .private/release.json --send
 ```
 
-Default maximum is 80 new messages per invocation. All sends also share the
-dashboard’s database quota, reserving 20 of the Free plan’s 100 daily attempts
-for confirmations, login codes, and tests. After upgrading Resend, select paid
-mode in dashboard Settings and set `TABTAB_SEND_LIMIT` to the desired CLI batch size. The CLI sends at less than two requests/second and stops on
+Default maximum is 80 new messages per invocation; set `TABTAB_SEND_LIMIT` to
+change the CLI batch size. TabTab shares OpenCam's Resend Pro account, so there is
+no daily cap (`daily_limit` 0); attempts are still counted for the dashboard. The CLI sends at less than two requests/second and stops on
 the first error. Running the same campaign again skips successful deliveries.
 Content is immutable per recipient/campaign; do not reuse an ID for a different
 release. No release is sent automatically on Git pushes.
@@ -146,8 +145,7 @@ the dashboard. The browser never receives this credential.
   in desktop/mobile widths and illustrative Gmail, Apple Mail, or Outlook frames.
   These are **browser approximations**, not actual client screenshots or dark-mode
   emulation. Use **Send test** to view exact rendering in real client inboxes.
-- **Settings:** configure a valid mailing address and choose the sending allowance.
-  Selecting paid mode does not purchase or upgrade a Resend plan.
+- **Settings:** configure a valid mailing address. Sending is uncapped on Resend Pro.
 - **Send test:** sends only to the address entered. Tests use an inert unsubscribe
   link and a `[TEST]` subject. An exact-content test is required before a campaign
   can start. Editing the message or footer invalidates that test requirement.
@@ -157,10 +155,9 @@ the dashboard. The browser never receives this credential.
 
 A Cloudflare Cron Trigger runs each minute, sending up to six emails per invocation
 within D1 Free's query limit. The dashboard can be closed while sending continues.
-On the default Free configuration, campaign emails stop at 80 total email attempts
-in a UTC day, reserving the last 20 of 100 for sign-in, confirmation, and test emails.
-The campaign resumes after the UTC day changes. Paid mode caps attempts at 5,000/day;
-a list of roughly 2,300 recipients takes about 6.5 hours with this background rate.
+There is no daily cap; a list of roughly 2,300 recipients takes about 6.5 hours at
+this background rate. The capped modes (100 or 5,000 attempts per UTC day) remain in
+`mail-budget.mjs` but can no longer be selected from Settings.
 All sending entrypoints share the database quota, including the original CLI.
 Provider monthly limits still apply. Uncertain provider outcomes pause the campaign
 for review; they are never blindly retried. Each recipient's status is checked again

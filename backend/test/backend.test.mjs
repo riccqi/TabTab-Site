@@ -11,6 +11,7 @@ function setup() {
   sql.exec(readFileSync(new URL('../migrations/0001_subscribers.sql',import.meta.url),'utf8'));
   sql.exec(readFileSync(new URL('../migrations/0002_subscription_basis.sql',import.meta.url),'utf8'));
   sql.exec(readFileSync(new URL('../migrations/0003_dashboard.sql',import.meta.url),'utf8'));
+  sql.exec(readFileSync(new URL('../migrations/0004_uncapped_sending.sql',import.meta.url),'utf8'));
   const wrap = (query,args=[]) => ({
     bind(...values){return wrap(query,values);},
     async first(){return sql.prepare(query).get(...args)||null;},
@@ -151,7 +152,7 @@ test('drafts require an exact-content test, snapshot audience, lock content, and
  const {env,sql}=setup();env.DASHBOARD_EMAIL='owner@example.com';await seed(env);const {runCampaigns}=await import('../src/dashboard-api.mjs');const {sendRelease}=await import('../src/index.mjs');
  const original=globalThis.fetch;let sends=0;globalThis.fetch=async()=>{sends++;return Response.json({id:'test-'+sends});};
  try{
-  await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City',daily_limit:100}),env);
+  await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City',daily_limit:0}),env);
   const d={id:'release-test',subject:'A release',markdown:'# Hello\n\n**New things**',preheader:'Fresh improvements'};
   assert.equal((await worker.fetch(dash('/campaign',d),env)).status,200);
   assert.equal((await worker.fetch(dash('/campaign/release-test/start',{confirmation:d.subject}),env)).status,400);
@@ -171,7 +172,7 @@ test('drafts require an exact-content test, snapshot audience, lock content, and
 });
 test('daily quota pauses before provider contact and does not leave a failed delivery lock',async()=>{
  const {env,sql}=setup(),row=await seed(env);const {sendRelease}=await import('../src/index.mjs');
- sql.prepare('INSERT INTO email_usage(day,attempts) VALUES (?,80)').run(new Date().toISOString().slice(0,10));
+ sql.prepare('UPDATE dashboard_settings SET daily_limit=100').run();sql.prepare('INSERT INTO email_usage(day,attempts) VALUES (?,80)').run(new Date().toISOString().slice(0,10));
  const body={campaign_id:'quota',contact_id:row.id,subject:'Update',markdown:'# Hello',preheader:''};
  const original=globalThis.fetch;let sent;globalThis.fetch=async(_url,options)=>{sent=JSON.parse(options.body);return Response.json({id:'quota-test'});};
  try{
@@ -218,7 +219,7 @@ test('central studio credential is dashboard-only and legacy dashboard logins ar
 
 test('a concurrent draft edit cannot bypass exact-content test before launch',async()=>{
  const {env,sql}=setup();await seed(env);
- await worker.fetch(dash('/settings',{postal_address:'Test address',daily_limit:100}),env);
+ await worker.fetch(dash('/settings',{postal_address:'Test address',daily_limit:0}),env);
  const d={id:'concurrent-edit',subject:'Tested subject',markdown:'Tested body',preheader:''};
  await worker.fetch(dash('/campaign',d),env);
  const {sha256}=await import('../src/crypto.mjs');
@@ -228,4 +229,16 @@ test('a concurrent draft edit cannot bypass exact-content test before launch',as
  env.DB.batch=async statements=>{sql.prepare("UPDATE campaigns SET subject='Untested edit',test_hash=NULL WHERE id=?").run(d.id);return batch(statements);};
  const result=await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env);
  assert.equal(result.status,409);assert.equal(sql.prepare('SELECT state FROM campaigns WHERE id=?').get(d.id).state,'draft');assert.equal(sql.prepare('SELECT COUNT(*) n FROM campaign_recipients').get().n,0);
+});
+
+test('uncapped sending ignores the daily counter and settings only accept no cap',async()=>{
+ const {env,sql}=setup(),row=await seed(env);const {sendRelease}=await import('../src/index.mjs');
+ sql.prepare('INSERT INTO email_usage(day,attempts) VALUES (?,10000)').run(new Date().toISOString().slice(0,10));
+ const original=globalThis.fetch;let sends=0;globalThis.fetch=async()=>{sends++;return Response.json({id:'uncapped-'+sends});};
+ try{
+  await sendRelease(request('/admin/send',{campaign_id:'uncapped',contact_id:row.id,subject:'Update',markdown:'# Hello',preheader:''}),env);
+  assert.equal(sends,1);assert.equal(sql.prepare('SELECT attempts FROM email_usage').get().attempts,10001);
+  assert.equal((await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City',daily_limit:5000,paid_plan_confirmed:true}),env)).status,400);
+  assert.equal((await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City',daily_limit:0}),env)).status,200);
+ }finally{globalThis.fetch=original;}
 });

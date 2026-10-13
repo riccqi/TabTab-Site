@@ -51,8 +51,7 @@ export async function dashboardAPI(req,env,services){
   const d=await input(req);if(typeof d?.id!=='string')bad('Invalid contact.');await env.DB.prepare("UPDATE contacts SET status=CASE WHEN status='suppressed' THEN status ELSE 'unsubscribed' END,confirmation_nonce=NULL,unsubscribed_at=?,updated_at=? WHERE id=?").bind(now(),now(),d.id).run();return json({ok:true});
  }
  if(path==='/settings'&&req.method==='POST'){
-  const d=await input(req);if(typeof d?.postal_address!=='string'||d.postal_address.length>500||![100,5000].includes(d.daily_limit))bad('Invalid settings.');
-  if(d.daily_limit>100&&d.paid_plan_confirmed!==true)bad('Confirm that your Resend account has a paid sending plan first.');
+  const d=await input(req);if(typeof d?.postal_address!=='string'||d.postal_address.length>500||d.daily_limit!==0)bad('Invalid settings. TabTab uses the Resend Pro plan with no daily cap.');
   await env.DB.prepare('UPDATE dashboard_settings SET postal_address=?,daily_limit=? WHERE id=1').bind(d.postal_address.trim(),d.daily_limit).run();return json({ok:true});
  }
  if(path==='/preview'&&req.method==='POST'){
