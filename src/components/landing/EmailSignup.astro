@@ -50,16 +50,16 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
             <label for="signup-website">Leave this field empty</label>
             <input id="signup-website" name="website" type="text" tabindex="-1" autocomplete="off" />
           </div>
-          <label class="flex items-start gap-2 w-4/5 text-sm text-primary-950/70 dark:text-primary-200/70">
-            <input type="checkbox" name="consent" value="yes" required class="mt-1 rounded" />
-            <span>I’d like TabTab updates by email. <a href="/privacy/" class="underline">Privacy policy</a>.</span>
-          </label>
+          <input type="hidden" name="consent" value="yes" />
           <button
             type="submit"
             class="w-4/5 mx-auto items-center justify-center h-12 font-medium rounded-full focus-visible:outline-black focus:outline-none inline-flex bg-black border-2 border-black text-white duration-200 focus-visible:ring-black hover:bg-white hover:border-black hover:text-black px-4 py-3 text-center mt-4"
           >
-            Get updates
+            Subscribe
           </button>
+          <p class="w-4/5 text-sm text-center text-primary-950/70 dark:text-primary-200/70">
+            By subscribing, you agree to receive TabTab updates by email. <a href="/privacy/" class="underline">Privacy policy</a>.
+          </p>
           <p id="signup-status" role="status" aria-live="polite" class="text-sm text-center w-4/5"></p>
         </form>
       </div>
@@ -94,7 +94,7 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
           ? error.message : "Could not reach the signup service. Please try again in a moment.";
       } finally {
         button.disabled = false;
-        button.textContent = "Get updates";
+        button.textContent = "Subscribe";
       }
     });
   }
