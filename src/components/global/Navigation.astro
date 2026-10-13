@@ -16,6 +16,8 @@ import tabtabImage from "../../../public/tabtab-full.png";
         </div>
         <button
           @click="open = !open"
+          aria-label="Toggle navigation"
+          :aria-expanded="open"
           class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-black focus:outline-none focus:text-black md:hidden">
           <svg
             class="w-6 h-6"

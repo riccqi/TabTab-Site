@@ -105,6 +105,8 @@
           <a href="/tabtab2.0-demo.mp4" class="absolute bottom-2 left-2 bg-black/80 text-white px-4 py-2 rounded-full text-sm">Watch demo</a>
         </noscript>
 
+        <button id="demo-play" type="button" hidden class="absolute inset-0 flex items-center justify-center bg-black/10 text-white" aria-label="Play TabTab demo"><span class="rounded-full bg-black/80 px-6 py-3 font-medium">▶ Play demo</span></button>
+
         <!-- Sound Toggle Button -->
         <button
           id="sound-toggle"
@@ -123,6 +125,7 @@
     <script>
       const video = document.querySelector<HTMLVideoElement>('#demo-video');
       if (video) {
+        const playButton = document.getElementById('demo-play');
         const soundToggle = document.getElementById('sound-toggle');
         const mutedIcon = document.getElementById('sound-icon-muted');
         const unmutedIcon = document.getElementById('sound-icon-unmuted');
@@ -138,18 +141,33 @@
           void video.play().catch(() => {});
         };
 
-        if ('IntersectionObserver' in window) {
+        // Keep the poster visible while initial content loads. Mobile and reduced-
+        // motion visitors choose when to download and play the demo.
+        if (playButton) {
+          playButton.hidden = false;
+          playButton.addEventListener('click', play);
+        }
+        video.addEventListener('playing', () => {
+          if (playButton) playButton.hidden = true;
+          if (soundToggle) soundToggle.hidden = false;
+        });
+        video.addEventListener('error', () => {
+          if (playButton) playButton.hidden = false;
+        });
+        const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+        const autoplay = window.matchMedia('(min-width: 768px) and (prefers-reduced-motion: no-preference)').matches && !connection?.saveData;
+        const observe = () => {
+          if (!('IntersectionObserver' in window)) return;
           const observer = new IntersectionObserver(([entry]) => {
             if (!entry.isIntersecting) video.pause();
-            else play();
+            else if (autoplay || video.dataset.loaded) play();
           }, { threshold: 0.15 });
           observer.observe(video);
-        } else {
-          play();
-        }
+        };
+        if (document.readyState === 'complete') observe();
+        else window.addEventListener('load', observe, { once: true });
 
         if (soundToggle) {
-          soundToggle.hidden = false;
           soundToggle.addEventListener('click', () => {
             video.muted = !video.muted;
             soundToggle.setAttribute('aria-label', video.muted ? 'Unmute demo' : 'Mute demo');

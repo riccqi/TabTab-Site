@@ -74,6 +74,8 @@ const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? [
 <meta name="viewport" content="width=device-width" />
 <meta name="author" content="Richard Qi" />
 
+{Astro.url.pathname === "/" && <link rel="preload" as="image" href="/tabtab2.0-demo-poster.webp" fetchpriority="high" />}
+
 <!-- Primary Meta Tags -->
 <meta name="title" content={title} />
 <meta name="description" content={description} />
