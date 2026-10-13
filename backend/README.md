@@ -153,10 +153,11 @@ the dashboard. The browser never receives this credential.
   audience, and queues the campaign. Content and footer are frozen when it starts.
   Pause/resume is available; an already in-flight email may finish after pausing.
 
-A Cloudflare Cron Trigger runs each minute, sending up to six emails per invocation
-within D1 Free's query limit. The dashboard can be closed while sending continues.
-There is no daily cap; a list of roughly 2,300 recipients takes about 6.5 hours at
-this background rate. The capped modes (100 or 5,000 attempts per UTC day) remain in
+A Cloudflare Cron Trigger runs each minute, sending up to 100 emails per invocation
+in one Resend batch request, using about a dozen D1 queries regardless of batch size. The dashboard can be closed while sending continues.
+There is no daily cap; a list of roughly 2,300 recipients takes about 23 minutes at
+this background rate. A Resend 429 requeues the batch for the next minute; any other
+provider error or uncertain outcome pauses the campaign for review. The capped modes (100 or 5,000 attempts per UTC day) remain in
 `mail-budget.mjs` but can no longer be selected from Settings.
 All sending entrypoints share the database quota, including the original CLI.
 Provider monthly limits still apply. Uncertain provider outcomes pause the campaign

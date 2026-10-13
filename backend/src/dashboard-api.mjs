@@ -1,6 +1,6 @@
 import {sha256} from './crypto.mjs';
 import {renderEmail} from './email-template.mjs';
-import {settings} from './mail-budget.mjs';
+import {settings,remainingEmails} from './mail-budget.mjs';
 const json=(x,status=200,headers={})=>Response.json(x,{status,headers});
 const bad=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const now=()=>new Date().toISOString();
@@ -90,25 +90,26 @@ export async function dashboardAPI(req,env,services){
  }
  bad('Not found.',404);
 }
+const CAMPAIGN_BATCH=100;
 export async function runCampaigns(env,services){
  const campaigns=await env.DB.prepare("SELECT * FROM campaigns WHERE state='sending' ORDER BY started_at LIMIT 1").all();
  if(!campaigns.results.length)return;
  const c=campaigns.results[0];
  env={...env,EMAIL_SETTINGS:await settings(env)};let blocked=false;
- // Recover interrupted runs safely: sendRelease's durable delivery ledger decides whether a retry is safe.
+ // Recover interrupted runs safely: the durable delivery ledger decides whether a retry is safe.
  await env.DB.prepare("UPDATE campaign_recipients SET state='queued' WHERE campaign_id=? AND state='processing' AND claimed_at<?").bind(c.id,Date.now()-600000).run();
- for(let i=0;i<6;i++){
-  const r=await env.DB.prepare(`UPDATE campaign_recipients SET state='processing',claimed_at=? WHERE campaign_id=? AND contact_id=(SELECT contact_id FROM campaign_recipients WHERE campaign_id=? AND state='queued' ORDER BY contact_id LIMIT 1) AND state='queued' AND EXISTS(SELECT 1 FROM campaigns WHERE id=? AND state='sending') RETURNING contact_id`).bind(Date.now(),c.id,c.id,c.id).first();
-  if(!r)break;
-  try{
-   const result=await services.sendRelease(new Request('https://internal/admin/send',{method:'POST',body:JSON.stringify({campaign_id:c.id,contact_id:r.contact_id,subject:c.subject,markdown:c.markdown,preheader:c.preheader})}),{...env,POSTAL_ADDRESS:c.postal_address});
-   const data=await result.json();await env.DB.prepare('UPDATE campaign_recipients SET state=?,error=NULL WHERE campaign_id=? AND contact_id=?').bind(data.skipped?'skipped':'sent',c.id,r.contact_id).run();
-  }catch(e){
-   blocked=true;
-   if(e.quota){await env.DB.prepare("UPDATE campaign_recipients SET state='queued' WHERE campaign_id=? AND contact_id=?").bind(c.id,r.contact_id).run();await env.DB.prepare('UPDATE campaigns SET last_error=? WHERE id=?').bind(e.message,c.id).run();break;}
-   await env.DB.batch([env.DB.prepare("UPDATE campaign_recipients SET state='uncertain',error=? WHERE campaign_id=? AND contact_id=?").bind(e.message,c.id,r.contact_id),env.DB.prepare("UPDATE campaigns SET state='paused',last_error=?,updated_at=? WHERE id=?").bind('Delivery needs review: '+e.message,now(),c.id)]);break;
-  }
-  if(i<5)await (services.delay || (ms=>new Promise(resolve=>setTimeout(resolve,ms))))(650);
+ const size=await remainingEmails(env,CAMPAIGN_BATCH);
+ if(!size){blocked=true;await env.DB.prepare('UPDATE campaigns SET last_error=? WHERE id=?').bind('Daily sending limit reached. Sending resumes after midnight UTC.',c.id).run();}
+ const claimed=size?(await env.DB.prepare(`UPDATE campaign_recipients SET state='processing',claimed_at=? WHERE campaign_id=? AND state='queued' AND contact_id IN (SELECT contact_id FROM campaign_recipients WHERE campaign_id=? AND state='queued' ORDER BY contact_id LIMIT ?) AND EXISTS(SELECT 1 FROM campaigns WHERE id=? AND state='sending') RETURNING contact_id`).bind(Date.now(),c.id,c.id,size,c.id).all()).results.map(r=>r.contact_id):[];
+ if(claimed.length){
+  let results;
+  try{results=await services.sendReleaseBatch({...env,POSTAL_ADDRESS:c.postal_address},c,claimed);}
+  catch(e){results=claimed.map(contact_id=>({contact_id,state:'uncertain',error:e.message}));}
+  await env.DB.prepare(`UPDATE campaign_recipients SET state=json_extract(j.value,'$.state'),error=json_extract(j.value,'$.error') FROM json_each(?) j WHERE campaign_recipients.campaign_id=? AND campaign_recipients.contact_id=json_extract(j.value,'$.id')`)
+   .bind(JSON.stringify(results.map(r=>({id:r.contact_id,state:r.state,error:r.state==='uncertain'?r.error:null}))),c.id).run();
+  const problem=results.find(r=>r.state==='uncertain'),retry=results.find(r=>r.state==='queued');
+  if(problem){blocked=true;await env.DB.prepare("UPDATE campaigns SET state='paused',last_error=?,updated_at=? WHERE id=?").bind('Delivery needs review: '+problem.error,now(),c.id).run();}
+  else if(retry){blocked=true;await env.DB.prepare('UPDATE campaigns SET last_error=? WHERE id=?').bind(retry.error,c.id).run();}
  }
  if(!blocked)await env.DB.prepare('UPDATE campaigns SET last_error=NULL,updated_at=? WHERE id=?').bind(now(),c.id).run();
  await env.DB.prepare("UPDATE campaigns SET state=CASE WHEN EXISTS(SELECT 1 FROM campaign_recipients WHERE campaign_id=campaigns.id AND state IN ('failed','uncertain')) THEN 'needs_review' ELSE 'completed' END,updated_at=? WHERE id=? AND state='sending' AND NOT EXISTS(SELECT 1 FROM campaign_recipients WHERE campaign_id=? AND state IN ('queued','processing'))").bind(now(),c.id,c.id).run();

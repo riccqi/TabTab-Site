@@ -149,8 +149,8 @@ test('Markdown renderer escapes raw HTML and unsafe URLs while preserving useful
  assert.match(html,/<strong>Bold<\/strong>/);assert.match(html,/href="https:\/\/example.com\//);assert.doesNotMatch(html,/<script|href="javascript:|<img src=x/);assert.match(html,/&lt;img/);assert.match(html,/<th /);assert.match(html,/Address &lt;test&gt;/);
 });
 test('drafts require an exact-content test, snapshot audience, lock content, and respect later opt-outs',async()=>{
- const {env,sql}=setup();env.DASHBOARD_EMAIL='owner@example.com';await seed(env);const {runCampaigns}=await import('../src/dashboard-api.mjs');const {sendRelease}=await import('../src/index.mjs');
- const original=globalThis.fetch;let sends=0;globalThis.fetch=async()=>{sends++;return Response.json({id:'test-'+sends});};
+ const {env,sql}=setup();env.DASHBOARD_EMAIL='owner@example.com';await seed(env);const {runCampaigns}=await import('../src/dashboard-api.mjs');const {sendReleaseBatch}=await import('../src/index.mjs');
+ const original=globalThis.fetch;let sends=0;globalThis.fetch=async(url,options)=>{if(String(url).endsWith('/emails/batch')){const batch=JSON.parse(options.body);return Response.json({data:batch.map(()=>({id:'test-'+(++sends)}))});}sends++;return Response.json({id:'test-'+sends});};
  try{
   await worker.fetch(dash('/settings',{postal_address:'PO Box 1, City',daily_limit:0}),env);
   const d={id:'release-test',subject:'A release',markdown:'# Hello\n\n**New things**',preheader:'Fresh improvements'};
@@ -165,7 +165,7 @@ test('drafts require an exact-content test, snapshot audience, lock content, and
   assert.equal((await worker.fetch(dash('/campaign',d),env)).status,409);
   await seed(env,{email:'later@example.com',external_id:'later'});
   sql.prepare("UPDATE contacts SET status='unsubscribed' WHERE email='reader@example.com'").run();
-  await runCampaigns(env,{sendRelease});
+  await runCampaigns(env,{sendReleaseBatch});
   assert.equal(sends,2);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='release-test'").get().state,'completed');assert.equal(sql.prepare('SELECT COUNT(*) n FROM campaign_recipients').get().n,1);assert.equal(sql.prepare('SELECT state FROM campaign_recipients').get().state,'skipped');
   const list=await (await worker.fetch(dash('/contacts?q=reader&status=unsubscribed'),env)).json();assert.equal(list.total,1);assert.equal(list.contacts[0].email,'reader@example.com');
  }finally{globalThis.fetch=original;}
@@ -180,15 +180,38 @@ test('daily quota pauses before provider contact and does not leave a failed del
   sql.prepare('UPDATE email_usage SET attempts=0').run();await sendRelease(request('/admin/send',body),env);assert.match(sent.html,/<h1/);assert.match(sent.headers['List-Unsubscribe'],/unsubscribe\?token=/);await sendRelease(request('/admin/send',body),env);assert.equal(sql.prepare('SELECT attempts FROM email_usage').get().attempts,1);
  }finally{globalThis.fetch=original;}
 });
-test('background sender batches within the D1 Free query limit and resumes without duplicate sends',async()=>{
- const {env,sql}=setup();const {runCampaigns}=await import('../src/dashboard-api.mjs'),{sendRelease}=await import('../src/index.mjs');
+test('background sender sends 100 per run in one batch within the D1 Free query limit and resumes without duplicate sends',async()=>{
+ const {env,sql}=setup();const {runCampaigns}=await import('../src/dashboard-api.mjs'),{sendReleaseBatch}=await import('../src/index.mjs');
  const date=new Date().toISOString();sql.prepare("INSERT INTO campaigns(id,subject,markdown,preheader,state,postal_address,created_at,updated_at,started_at) VALUES ('background','Release','# Hello','Preview','sending','PO Box 1',?,?,?)").run(date,date,date);
- for(let i=0;i<7;i++){const row=await seed(env,{email:`reader${i}@example.com`,external_id:String(i)});sql.prepare("INSERT INTO campaign_recipients(campaign_id,contact_id) VALUES ('background',?)").run(row.id);}
- const original=globalThis.fetch;let sent=0;globalThis.fetch=async()=>{sent++;return Response.json({id:'background-'+sent});};
+ for(let i=0;i<105;i++){const row=await seed(env,{email:`reader${i}@example.com`,external_id:String(i)});sql.prepare("INSERT INTO campaign_recipients(campaign_id,contact_id) VALUES ('background',?)").run(row.id);}
+ const original=globalThis.fetch;let sent=0,requests=0,keys=[],batch;globalThis.fetch=async(url,options)=>{requests++;assert.match(String(url),/\/emails\/batch$/);keys.push(options.headers['Idempotency-Key']);batch=JSON.parse(options.body);sent+=batch.length;return Response.json({data:batch.map((_,i)=>({id:`background-${sent}-${i}`}))});};
  const prepare=env.DB.prepare;let queries=0;env.DB.prepare=(...args)=>{queries++;return prepare(...args);};
  try{
-  await runCampaigns(env,{sendRelease,delay:async()=>{}});assert.equal(sent,6);assert.ok(queries<=50,`Used ${queries} D1 queries`);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='background'").get().state,'sending');
-  queries=0;await runCampaigns(env,{sendRelease,delay:async()=>{}});assert.equal(sent,7);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='background'").get().state,'completed');await runCampaigns(env,{sendRelease,delay:async()=>{}});assert.equal(sent,7);
+  await runCampaigns(env,{sendReleaseBatch});assert.equal(sent,100);assert.equal(requests,1);assert.ok(queries<=50,`Used ${queries} D1 queries`);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='background'").get().state,'sending');
+  assert.equal(new Set(batch.map(m=>m.to)).size,100);assert.ok(batch.every(m=>m.headers['List-Unsubscribe'].includes('/unsubscribe?token=')&&m.html.includes(m.headers['List-Unsubscribe'].slice(1,-1).replaceAll('&','&amp;'))));
+  assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries WHERE state='sent' AND provider_id LIKE 'background-%'").get().n,100);assert.equal(sql.prepare('SELECT attempts FROM email_usage').get().attempts,100);
+  queries=0;await runCampaigns(env,{sendReleaseBatch});assert.equal(sent,105);assert.equal(requests,2);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='background'").get().state,'completed');await runCampaigns(env,{sendReleaseBatch});assert.equal(sent,105);
+  assert.equal(new Set(keys).size,2);
+ }finally{globalThis.fetch=original;}
+});
+
+test('batch matches single-send content, requeues on Resend throttling, and pauses on uncertain outcomes',async()=>{
+ const {env,sql}=setup();const {runCampaigns}=await import('../src/dashboard-api.mjs'),{sendReleaseBatch,sendRelease}=await import('../src/index.mjs');
+ const date=new Date().toISOString();sql.prepare("INSERT INTO campaigns(id,subject,markdown,preheader,state,postal_address,created_at,updated_at,started_at) VALUES ('throttle','Release','# Hello','Preview','sending','PO Box 1',?,?,?)").run(date,date,date);
+ const rows=[];for(let i=0;i<3;i++){const row=await seed(env,{email:`t${i}@example.com`,external_id:'t'+i});rows.push(row);sql.prepare("INSERT INTO campaign_recipients(campaign_id,contact_id) VALUES ('throttle',?)").run(row.id);}
+ const original=globalThis.fetch;let mode='throttle',single;
+ globalThis.fetch=async(url,options)=>{if(!String(url).endsWith('/batch')){single=JSON.parse(options.body);return Response.json({id:'single'});}if(mode==='throttle')return new Response('{}',{status:429});if(mode==='down')return new Response('{}',{status:502});const b=JSON.parse(options.body);return Response.json({data:b.map((_,i)=>({id:'ok-'+i}))});};
+ try{
+  await runCampaigns(env,{sendReleaseBatch});
+  assert.equal(sql.prepare("SELECT COUNT(*) n FROM campaign_recipients WHERE state='queued'").get().n,3);assert.equal(sql.prepare('SELECT COUNT(*) n FROM deliveries').get().n,0);
+  assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='throttle'").get().state,'sending');assert.match(sql.prepare("SELECT last_error FROM campaigns WHERE id='throttle'").get().last_error,/rate limit/);
+  assert.equal(sql.prepare('SELECT attempts FROM email_usage').get().attempts,0);
+  // A single send of the same recipient produces the identical content hash the batch would use.
+  await sendRelease(request('/admin/send',{campaign_id:'throttle',contact_id:rows[0].id,subject:'Release',markdown:'# Hello',preheader:'Preview'}),{...env,POSTAL_ADDRESS:'PO Box 1'});
+  mode='down';await runCampaigns(env,{sendReleaseBatch});
+  assert.equal(sql.prepare("SELECT state FROM campaign_recipients WHERE contact_id=?").get(rows[0].id).state,'sent');
+  assert.equal(sql.prepare("SELECT COUNT(*) n FROM deliveries WHERE state='uncertain'").get().n,2);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='throttle'").get().state,'paused');
+  assert.equal(sql.prepare("SELECT COUNT(*) n FROM campaign_recipients WHERE state='uncertain'").get().n,2);
  }finally{globalThis.fetch=original;}
 });
 
