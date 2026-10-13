@@ -5,7 +5,7 @@ import { dashboardHTML, dashboardCSS, dashboardScript } from './dashboard-ui.mjs
 import { renderEmail } from './email-template.mjs';
 import { reserveEmail, settings } from './mail-budget.mjs';
 
-const CONSENT = 'tabtab-release-updates-v1';
+const CONSENT = 'tabtab-updates-v2';
 const okMessage = 'If this address can subscribe, a confirmation email is on its way. Please check your inbox.';
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const now = () => new Date().toISOString();
@@ -57,7 +57,7 @@ async function subscribe(request, env) {
   const data = type.includes('application/json') ? parseJSON(raw) : Object.fromEntries(new URLSearchParams(raw));
   if (data.website) return json({ message:okMessage });
   const email = normalizeEmail(data.email);
-  if (!email || data.consent !== 'yes') fail('Enter a valid email and agree to receive TabTab release updates.');
+  if (!email || data.consent !== 'yes') fail('Enter a valid email and agree to receive TabTab updates.');
   const name = typeof data.name === 'string' ? data.name.trim().slice(0,120) : '';
   await env.DB.batch(contactStatements(env.DB, { email, name, source:'website', external_id:email, status:'customer' }));
   // Atomic claim prevents concurrent requests and throttles by email across all IPs.
@@ -71,9 +71,9 @@ async function subscribe(request, env) {
     const value = await token(env.TOKEN_SECRET, { id:row.id, purpose:'confirm', nonce, exp:Date.now()+86400000 });
     const url = `${env.PUBLIC_URL}/confirm?token=${encodeURIComponent(value)}`;
     try {
-      await sendEmail(env, { to:email, subject:'Confirm your TabTab release updates',
-        text:`Confirm that you would like TabTab release updates:\n\n${url}\n\nThis link expires in 24 hours. If you did not sign up, ignore this email.`,
-        html:`<p>Confirm that you would like TabTab release updates.</p><p><a href="${esc(url)}">Confirm my subscription</a></p><p>This link expires in 24 hours. If you did not sign up, ignore this email.</p>`
+      await sendEmail(env, { to:email, subject:'Confirm your TabTab updates',
+        text:`Confirm that you would like TabTab updates:\n\n${url}\n\nThis link expires in 24 hours. If you did not sign up, ignore this email.`,
+        html:`<p>Confirm that you would like TabTab updates.</p><p><a href="${esc(url)}">Confirm my subscription</a></p><p>This link expires in 24 hours. If you did not sign up, ignore this email.</p>`
       }, `confirmation/${row.id}/${nonce}`);
     } catch (error) {
       await env.DB.prepare('UPDATE contacts SET confirmation_sent_at=NULL WHERE id=? AND confirmation_nonce=?').bind(row.id,nonce).run();
@@ -95,7 +95,7 @@ async function preference(request, env, purpose) {
     const confirming = purpose === 'confirm';
     // GET must not change state: mail security scanners commonly open every link.
     return page(confirming ? 'Confirm your subscription' : 'Unsubscribe from updates',
-      confirming ? 'Receive occasional TabTab release updates. You can unsubscribe at any time.' : 'Stop receiving TabTab release emails. This will not affect your purchase or license.',
+      confirming ? 'Receive occasional TabTab updates. You can unsubscribe at any time.' : 'Stop receiving TabTab update emails. This will not affect your purchase or license.',
       `<form method="post"><button type="submit">${confirming ? 'Confirm subscription' : 'Unsubscribe'}</button></form>`);
   }
   if (purpose === 'confirm') {
@@ -103,11 +103,11 @@ async function preference(request, env, purpose) {
       consent_version=?,unsubscribed_at=NULL,confirmation_nonce=NULL,updated_at=? WHERE id=? AND confirmation_nonce=? AND status!='suppressed' RETURNING id`)
       .bind(now(),CONSENT,now(),data.id,data.nonce).first();
     if (!result) fail('This confirmation link is no longer valid.');
-    return page('You’re subscribed','We’ll email you when there is a new TabTab release.');
+    return page('You’re subscribed','We’ll keep you posted with occasional TabTab news and updates.');
   }
   await env.DB.prepare(`UPDATE contacts SET status=CASE WHEN status='suppressed' THEN status ELSE 'unsubscribed' END,
     unsubscribed_at=?,confirmation_nonce=NULL,updated_at=? WHERE id=?`).bind(now(),now(),data.id).run();
-  return page('You’re unsubscribed','You will no longer receive TabTab release emails.');
+  return page('You’re unsubscribed','You will no longer receive TabTab update emails.');
 }
 
 async function lemonWebhook(request, env) {
@@ -172,7 +172,7 @@ export async function sendRelease(request,env) {
   required(env,['RESEND_API_KEY','TOKEN_SECRET','PUBLIC_URL','POSTAL_ADDRESS','RESEND_WEBHOOK_SECRET']);
   const data = parseJSON(await bodyText(request,32768));
   const content = data?.markdown ?? data?.text;
-  if (!/^[a-zA-Z0-9._-]{1,80}$/.test(data?.campaign_id || '') || typeof data.contact_id !== 'string' || typeof data.subject !== 'string' || !data.subject.trim() || data.subject.length>200 || typeof content !== 'string' || !content.trim() || content.length>20000) fail('Invalid release message.');
+  if (!/^[a-zA-Z0-9._-]{1,80}$/.test(data?.campaign_id || '') || typeof data.contact_id !== 'string' || typeof data.subject !== 'string' || !data.subject.trim() || data.subject.length>200 || typeof content !== 'string' || !content.trim() || content.length>20000) fail('Invalid update message.');
   const contact = await env.DB.prepare('SELECT id,email,status FROM contacts WHERE id=?').bind(data.contact_id).first();
   if (!contact || contact.status !== 'subscribed') return json({ skipped:true });
   const value = await token(env.TOKEN_SECRET,{ id:contact.id,purpose:'unsubscribe' });
@@ -224,7 +224,7 @@ export default {
       else if (path === '/dashboard' && request.method === 'GET') response = new Response(dashboardHTML,{headers:{'Content-Type':'text/html; charset=utf-8'}});
       else if (path === '/dashboard/app.js' && request.method === 'GET') response = new Response(dashboardScript,{headers:{'Content-Type':'text/javascript; charset=utf-8'}});
       else if (path === '/dashboard/style.css' && request.method === 'GET') response = new Response(dashboardCSS,{headers:{'Content-Type':'text/css; charset=utf-8'}});
-      else if (path === '/dashboard/test-unsubscribe' && request.method === 'GET') response = page('This is a test email','The unsubscribe link in a real release updates that recipient’s subscription immediately. No subscription was changed.');
+      else if (path === '/dashboard/test-unsubscribe' && request.method === 'GET') response = page('This is a test email','The unsubscribe link in a real updates that recipient’s subscription immediately. No subscription was changed.');
       else if (request.method === 'OPTIONS') {
         response = request.headers.get('origin') === env.SITE_ORIGIN && path === '/subscribe' ? new Response(null,{ status:204 }) : json({ error:'Forbidden.' },403);
       } else if (path === '/health' && request.method === 'GET') {

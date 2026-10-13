@@ -11,7 +11,7 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
         <Image src={tabtabImage} width={80} densities={[1, 2]} format="webp" quality={85} loading="lazy" alt="TabTab Logo" class="h-20 w-auto mb-2" />
         <h2 class="text-3xl font-medium tracking-tight sm:text-4xl">Stay Updated</h2>
         <p class="text-primary-950/70 dark:text-primary-200/70 text-lg text-center max-w-lg mb-2">
-          Get occasional TabTab release updates. Unsubscribe at any time.
+          Get occasional TabTab updates. Unsubscribe at any time.
         </p>
         <form
           id="release-signup"
@@ -52,13 +52,13 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
           </div>
           <label class="flex items-start gap-2 w-4/5 text-sm text-primary-950/70 dark:text-primary-200/70">
             <input type="checkbox" name="consent" value="yes" required class="mt-1 rounded" />
-            <span>I’d like TabTab release updates by email. <a href="/privacy/" class="underline">Privacy policy</a>.</span>
+            <span>I’d like TabTab updates by email. <a href="/privacy/" class="underline">Privacy policy</a>.</span>
           </label>
           <button
             type="submit"
             class="w-4/5 mx-auto items-center justify-center h-12 font-medium rounded-full focus-visible:outline-black focus:outline-none inline-flex bg-black border-2 border-black text-white duration-200 focus-visible:ring-black hover:bg-white hover:border-black hover:text-black px-4 py-3 text-center mt-4"
           >
-            Get release updates
+            Get updates
           </button>
           <p id="signup-status" role="status" aria-live="polite" class="text-sm text-center w-4/5"></p>
         </form>
@@ -94,7 +94,7 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
           ? error.message : "Could not reach the signup service. Please try again in a moment.";
       } finally {
         button.disabled = false;
-        button.textContent = "Get release updates";
+        button.textContent = "Get updates";
       }
     });
   }
