@@ -174,3 +174,7 @@ The Worker validates the token, hostname, and signup action before storing a con
 Missing, expired, reused, or invalid tokens fail closed. Rate limiting and the honeypot remain.
 For local browser tests, override PUBLIC_TURNSTILE_SITE_KEY with Cloudflare's test key
 and use its corresponding test secret in a local Worker only; never deploy test credentials.
+
+## Email addresses
+
+Updates are sent from `TabTab <richard@tabtabapp.net>` with replies to `richard@tabtabapp.net`. Public support uses `hello@tabtabapp.net`. Cloudflare Email Routing forwards both addresses directly to the owner’s verified Gmail inbox. Legacy `updates@` webhook events remain accepted for delayed bounce/complaint handling; OpenCam events are ignored. Personal sending from Gmail or Apple Mail requires a separate send-as/SMTP configuration.

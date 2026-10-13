@@ -104,17 +104,19 @@ test('release sending skips opt-outs, prevents duplicates and includes one-click
   await seed(env,{status:'unsubscribed'});await send();assert.equal(messages.length,1);
 });
 test('Resend suppression webhook is signed and refuses stale timestamps',async()=>{
+ for (const from of ['TabTab <updates@tabtabapp.net>','TabTab <richard@tabtabapp.net>','richard@tabtabapp.net']) {
   const {env,sql}=setup();await seed(env);
-  const raw=JSON.stringify({type:'email.complained',data:{from:'TabTab <updates@tabtabapp.net>',to:['reader@example.com']}});
+  const raw=JSON.stringify({type:'email.complained',data:{from,to:['reader@example.com']}});
   const signed=async timestamp=>request('/webhooks/resend',raw,{'svix-id':'evt-1','svix-timestamp':String(timestamp),'svix-signature':`v1,${Buffer.from(await hmac(new TextEncoder().encode('test'),`evt-1.${timestamp}.${raw}`)).toString('base64')}`});
   assert.equal((await worker.fetch(await signed(1),env)).status,401);
   assert.equal((await worker.fetch(await signed(Math.floor(Date.now()/1000)),env)).status,200);
   assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'suppressed');
+ }
 });
 
 test('shared Resend events from OpenCam cannot suppress TabTab subscribers',async()=>{
   const {env,sql}=setup();await seed(env);
-  for(const from of ['updates@opencam.app','OpenCam <updates@opencam.app>','']) {
+  for(const from of ['updates@opencam.app','OpenCam <updates@opencam.app>','richard@opencam.app','OpenCam <richard@opencam.app>','']) {
     const raw=JSON.stringify({type:'email.complained',data:{from,to:['reader@example.com']}}),timestamp=Math.floor(Date.now()/1000);
     const signature=Buffer.from(await hmac(new TextEncoder().encode('test'),`evt-other.${timestamp}.${raw}`)).toString('base64');
     const response=await worker.fetch(request('/webhooks/resend',raw,{'svix-id':'evt-other','svix-timestamp':String(timestamp),'svix-signature':`v1,${signature}`}),env);
