@@ -32,5 +32,8 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "wrangler": "^4.150.0"
+  },
+  "dependencies": {
+    "@riccqi/email-studio": "https://raw.githubusercontent.com/riccqi/opencam-site/0bac35951267d81f2393413c5c8f53c05290233b/packages/releases/riccqi-email-studio-1.0.0.tgz"
   }
 }
