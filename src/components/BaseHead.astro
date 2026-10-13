@@ -10,7 +10,7 @@ interface Props {
 }
 
 const defaultTitle = "TabTab: Search & Switch Windows and Tabs on Mac";
-const defaultDescription = "Tired of losing track of windows and browser tabs? TabTab is a powerful Mac window switcher that lets you instantly search and switch to anything. Compact, fast, and beautiful.";
+const defaultDescription = "Search and switch between Mac windows and browser tabs by title, URL, or app name. Try TabTab for free, with a one-time purchase for Pro.";
 const {
   title = defaultTitle,
   description = defaultDescription,
@@ -47,7 +47,12 @@ const softwareApplicationData = {
   ],
   description: defaultDescription,
 };
-const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? softwareApplicationData : undefined);
+const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? [{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "TabTab",
+  url: new URL("/", siteUrl).href,
+}, softwareApplicationData] : undefined);
 ---
 <!-- Google tag (gtag.js) -->
 <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-P4PBQ5VZC9"></script>
@@ -74,6 +79,9 @@ const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? s
 <meta name="description" content={description} />
 
 <!-- Open Graph / Facebook -->
+<meta property="og:site_name" content="TabTab" />
+<meta property="og:locale" content="en_US" />
+{socialImageUrl && <meta property="og:image:alt" content={title} />}
 <meta property="og:type" content={ogType} />
 <meta property="og:url" content={canonicalUrl.href} />
 <meta property="og:title" content={title} />
