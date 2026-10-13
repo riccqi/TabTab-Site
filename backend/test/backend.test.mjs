@@ -200,3 +200,18 @@ test('Turnstile rejects missing, forged, expired, wrong-host and wrong-action to
  outage=true;assert.equal((await submit('valid')).status,503);
  assert.equal(sql.prepare('SELECT COUNT(*) n FROM contacts').get().n,0);
 });
+
+test('central studio credential is dashboard-only and legacy dashboard logins are disabled',async()=>{
+ const {env}=setup();env.STUDIO_URL='https://updates-api.opencam.app/dashboard?app=tabtab';env.SHARED_STUDIO_TOKEN='shared-studio-test-secret';
+ const redirect=await worker.fetch(request('/dashboard'),env);assert.equal(redirect.status,302);assert.equal(redirect.headers.get('location'),env.STUDIO_URL);
+ assert.equal((await worker.fetch(dash('/overview',undefined,''),env)).status,401);
+ assert.equal((await worker.fetch(dash('/overview'),env)).status,401);
+ assert.equal((await worker.fetch(dash('/login',{},''),env)).status,401);
+ assert.equal((await worker.fetch(dash('/overview',undefined,env.SHARED_STUDIO_TOKEN),env)).status,200);
+ assert.equal((await worker.fetch(dash('/login',{},env.SHARED_STUDIO_TOKEN),env)).status,404);
+ const draft={id:'central-test',subject:'Only TabTab',markdown:'Hello TabTab',preheader:''};
+ assert.equal((await worker.fetch(dash('/campaign',draft,env.SHARED_STUDIO_TOKEN),env)).status,200);
+ const overview=await(await worker.fetch(dash('/overview',undefined,env.SHARED_STUDIO_TOKEN),env)).json();assert.equal(overview.campaigns[0].id,draft.id);
+ assert.equal((await worker.fetch(request('/admin/contacts',undefined,{Authorization:'Bearer '+env.SHARED_STUDIO_TOKEN}),env)).status,401);
+ const cross=new Request('https://updates.tabtabapp.net/dashboard/api/settings',{method:'POST',headers:{Authorization:'Bearer '+env.SHARED_STUDIO_TOKEN,Origin:'https://evil.example','X-TabTab-Dashboard':'1'},body:'{}'});assert.equal((await worker.fetch(cross,env)).status,403);
+});

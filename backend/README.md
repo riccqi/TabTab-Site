@@ -125,11 +125,17 @@ Worker: `https://updates.tabtabapp.net`. D1: `tabtab-email`. Resend domain: `tab
 
 ## Private dashboard
 
-Open **https://updates.tabtabapp.net/dashboard**. Click **Email me a sign-in code**;
-enter the 8-digit code sent to `xiaochean@gmail.com`. Codes expire in 10 minutes
-and allow five attempts. Dashboard access is restricted to that owner inbox.
-Sessions last seven days and use secure, HttpOnly, SameSite cookies. Sign out to
-revoke the current session. No admin API key is exposed to browser JavaScript.
+Open **https://updates-api.opencam.app/dashboard?app=tabtab**. The old TabTab
+URL redirects here. One owner code sent to `opencamapp@gmail.com` unlocks both
+OpenCam and TabTab workspaces. Codes expire in 10 minutes and allow five attempts.
+Sessions last seven days; signing out revokes access to both workspaces.
+
+Lists, drafts, senders, settings and queues remain in separate app databases.
+The OpenCam Worker verifies the session and CSRF origin, then forwards only known
+TabTab dashboard routes through a service binding. `SHARED_STUDIO_TOKEN` is a
+server-only credential accepted by dashboard APIs, never admin APIs. With
+`STUDIO_URL` configured, legacy TabTab sessions and login endpoints cannot access
+the dashboard. The browser never receives this credential.
 
 - **Subscribers:** search names/emails, filter statuses, inspect source and subscription
   basis, and unsubscribe a contact without deleting their history.

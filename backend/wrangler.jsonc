@@ -4,8 +4,17 @@
   "main": "src/index.mjs",
   "compatibility_date": "2026-10-13",
   "workers_dev": true,
-  "routes": [{ "pattern": "updates.tabtabapp.net", "custom_domain": true }],
-  "triggers": { "crons": ["* * * * *"] },
+  "routes": [
+    {
+      "pattern": "updates.tabtabapp.net",
+      "custom_domain": true
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  },
   "vars": {
     "SITE_ORIGIN": "https://tabtabapp.net",
     "PUBLIC_URL": "https://updates.tabtabapp.net",
@@ -15,18 +24,28 @@
     "LEMONSQUEEZY_STORE_ID": "125728",
     "LEMONSQUEEZY_PRODUCT_IDS": "372705",
     "LEMONSQUEEZY_CUSTOMER_UPDATES": "true",
-    "POSTAL_ADDRESS": ""
+    "POSTAL_ADDRESS": "",
+    "STUDIO_URL": "https://updates-api.opencam.app/dashboard?app=tabtab"
   },
-  "d1_databases": [{
-    "binding": "DB",
-    "database_name": "tabtab-email",
-    "database_id": "bc9d532b-47f4-47e8-b1cf-7894a30fbe65",
-    "migrations_dir": "migrations"
-  }],
-  "ratelimits": [{
-    "name": "SIGNUP_LIMITER",
-    "namespace_id": "1001",
-    "simple": { "limit": 5, "period": 60 }
-  }],
-  "observability": { "enabled": false }
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tabtab-email",
+      "database_id": "bc9d532b-47f4-47e8-b1cf-7894a30fbe65",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "SIGNUP_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    }
+  ],
+  "observability": {
+    "enabled": false
+  }
 }

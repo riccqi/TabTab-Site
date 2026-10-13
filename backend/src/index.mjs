@@ -221,6 +221,7 @@ export default {
     try {
       const path = new URL(request.url).pathname;
       if (path.startsWith('/dashboard/api/')) response = await dashboardAPI(request,env,{sendEmail,sendRelease,normalizeEmail});
+      else if (['/dashboard','/dashboard/'].includes(path) && request.method === 'GET' && env.STUDIO_URL) response = new Response(null,{status:302,headers:{Location:env.STUDIO_URL}});
       else if (path === '/dashboard' && request.method === 'GET') response = new Response(dashboardHTML,{headers:{'Content-Type':'text/html; charset=utf-8'}});
       else if (path === '/dashboard/app.js' && request.method === 'GET') response = new Response(dashboardScript,{headers:{'Content-Type':'text/javascript; charset=utf-8'}});
       else if (path === '/dashboard/style.css' && request.method === 'GET') response = new Response(dashboardCSS,{headers:{'Content-Type':'text/css; charset=utf-8'}});

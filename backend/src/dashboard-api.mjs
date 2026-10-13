@@ -7,7 +7,7 @@ const now=()=>new Date().toISOString();
 async function input(req){if(Number(req.headers.get('content-length'))>40000)bad('Message is too large.',413);const reader=req.body?.getReader();let text='',size=0;const decoder=new TextDecoder();if(reader)while(true){const p=await reader.read();if(p.done)break;size+=p.value.length;if(size>40000){await reader.cancel();bad('Message is too large.',413);}text+=decoder.decode(p.value,{stream:true});}text+=decoder.decode();try{return JSON.parse(text);}catch{bad('Invalid request.');}}
 function safeDraft(d){if(!d||typeof d.subject!=='string'||d.subject.length>200||typeof d.markdown!=='string'||d.markdown.length>20000||typeof d.preheader!=='string'||d.preheader.length>200)bad('Use a subject up to 200 characters and a message up to 20,000 characters.');return d;}
 async function session(req,env){
- const bearer=req.headers.get('authorization');if(bearer&&env.ADMIN_TOKEN&&await sha256(bearer)===await sha256(`Bearer ${env.ADMIN_TOKEN}`))return 'operator';
+ const bearer=req.headers.get('authorization');if(bearer&&env.SHARED_STUDIO_TOKEN&&await sha256(bearer)===await sha256(`Bearer ${env.SHARED_STUDIO_TOKEN}`))return 'shared-studio';if(bearer&&env.ADMIN_TOKEN&&await sha256(bearer)===await sha256(`Bearer ${env.ADMIN_TOKEN}`))return 'operator';
  const value=(req.headers.get('cookie')||'').match(/(?:^|;\s*)__Host-tabtab_session=([^;]+)/)?.[1];
  if(!value||value.length>128)return null;
  const digest=await sha256(value),row=await env.DB.prepare('SELECT digest FROM dashboard_sessions WHERE digest=? AND expires_at>?').bind(digest,Date.now()).first();return row?.digest||null;
@@ -16,6 +16,7 @@ const cookie=value=>`__Host-tabtab_session=${value}; Path=/; HttpOnly; Secure; S
 export async function dashboardAPI(req,env,services){
  const u=new URL(req.url),path=u.pathname.replace('/dashboard/api','');
  if(req.method!=='GET'&&(req.headers.get('origin')!==u.origin||req.headers.get('x-tabtab-dashboard')!=='1'))bad('Please reload the dashboard and try again.',403);
+ if(env.STUDIO_URL){if(await session(req,env)!=='shared-studio')bad('Sign in through the shared email studio.',401);if(['/login','/verify','/logout'].includes(path))bad('Use the shared studio sign-in.',404);}
  if(path==='/login'&&req.method==='POST'){
   if(!env.DASHBOARD_EMAIL)bad('Dashboard sign-in is not configured.',503);
   if(!(await env.SIGNUP_LIMITER.limit({key:`dashboard/${req.headers.get('CF-Connecting-IP')||'local'}`})).success)bad('Please wait a minute before trying again.',429);
