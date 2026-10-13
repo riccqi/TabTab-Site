@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import tabtabImage from "../../../public/tabtab-icon.png";
+const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAAFV_2fxAyQceVFS7";
 const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabtabapp.net/subscribe";
 ---
 
@@ -51,6 +52,7 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
             <input id="signup-website" name="website" type="text" tabindex="-1" autocomplete="off" />
           </div>
           <input type="hidden" name="consent" value="yes" />
+          <div id="signup-turnstile" class="cf-turnstile" data-sitekey={sitekey} data-action="signup"></div>
           <button
             type="submit"
             class="w-4/5 mx-auto items-center justify-center h-12 font-medium rounded-full focus-visible:outline-black focus:outline-none inline-flex bg-black border-2 border-black text-white duration-200 focus-visible:ring-black hover:bg-white hover:border-black hover:text-black px-4 py-3 text-center mt-4"
@@ -67,6 +69,8 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
   </div>
 </section>
 
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <script>
   const form = document.querySelector<HTMLFormElement>("#release-signup");
   const status = document.querySelector<HTMLParagraphElement>("#signup-status");
@@ -79,10 +83,21 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
       button.textContent = "Submitting…";
       status.textContent = "";
       try {
+        // Invisible verification finishes in the background; the user's one click waits for it.
+        const turnstileWindow = window as Window & {turnstile?: {getResponse: (id: string) => string; reset: (id: string) => void}};
+        const deadline = Date.now() + 20000;
+        let challenge = '';
+        while (!challenge && Date.now() < deadline) {
+          try { challenge = turnstileWindow.turnstile?.getResponse('#signup-turnstile') || ''; } catch { /* Widget is still loading. */ }
+          if (!challenge) await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        if (!challenge) throw new Error('The security check could not load. Please check your connection or content blocker and try again.');
+        const payload = Object.fromEntries(new FormData(form));
+        payload['cf-turnstile-response'] = challenge;
         const response = await fetch(form.action, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(Object.fromEntries(new FormData(form))),
+          body: JSON.stringify(payload),
           signal: AbortSignal.timeout(20000),
         });
         const result = await response.json();
@@ -93,6 +108,7 @@ const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabta
         status.textContent = error instanceof Error && error.name !== "TimeoutError" && error.name !== "TypeError"
           ? error.message : "Could not reach the signup service. Please try again in a moment.";
       } finally {
+        try { (window as Window & {turnstile?: {reset: (id: string) => void}}).turnstile?.reset('#signup-turnstile'); } catch { /* Failed script loads are handled above. */ }
         button.disabled = false;
         button.textContent = "Subscribe";
       }

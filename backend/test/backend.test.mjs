@@ -18,7 +18,7 @@ function setup() {
     async run(){return sql.prepare(query).run(...args);}
   });
   const DB={prepare:wrap,async batch(statements){sql.exec('BEGIN');try{const r=[];for(const statement of statements)r.push(await statement.run());sql.exec('COMMIT');return r;}catch(e){sql.exec('ROLLBACK');throw e;}}};
-  return {sql,env:{DB,SITE_ORIGIN:'https://tabtabapp.net',PUBLIC_URL:'https://updates.tabtabapp.net',TOKEN_SECRET:'test-token-secret',ADMIN_TOKEN:'admin-secret',LEMONSQUEEZY_WEBHOOK_SECRET:'lemon-secret',LEMONSQUEEZY_STORE_ID:'1',LEMONSQUEEZY_PRODUCT_IDS:'2',RESEND_API_KEY:'fake',FROM_EMAIL:'TabTab <updates@example.com>',POSTAL_ADDRESS:'Test address',RESEND_WEBHOOK_SECRET:'whsec_dGVzdA==',SIGNUP_LIMITER:{limit:async()=>({success:true})}}};
+  return {sql,env:{DB,SITE_ORIGIN:'https://tabtabapp.net',PUBLIC_URL:'https://updates.tabtabapp.net',TURNSTILE_SECRET:'test-turnstile-secret',TOKEN_SECRET:'test-token-secret',ADMIN_TOKEN:'admin-secret',LEMONSQUEEZY_WEBHOOK_SECRET:'lemon-secret',LEMONSQUEEZY_STORE_ID:'1',LEMONSQUEEZY_PRODUCT_IDS:'2',RESEND_API_KEY:'fake',FROM_EMAIL:'TabTab <updates@example.com>',POSTAL_ADDRESS:'Test address',RESEND_WEBHOOK_SECRET:'whsec_dGVzdA==',SIGNUP_LIMITER:{limit:async()=>({success:true})}}};
 }
 const request=(path,body,headers={})=>new Request(`https://updates.tabtabapp.net${path}`,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:typeof body==='string'?body:JSON.stringify(body)})});
 const contact=(extra={})=>({email:'reader@example.com',name:'Reader',source:'formspree',external_id:'1',status:'subscribed',consent_at:'2026-01-01T00:00:00Z',consent_source:'Website signup',...extra});
@@ -74,8 +74,8 @@ test('unsubscribe GET is safe for scanners; POST persists and invalidates confir
 });
 test('signup activates immediately without email, preserves suppression, and supports explicit resubscribe',async(t)=>{
   const {env,sql}=setup();let sends=0;
-  t.mock.method(globalThis,'fetch',async()=>{sends++;throw new Error('Signup must not send email');});
-  const signup=()=>worker.fetch(request('/subscribe',{email:'reader@example.com',consent:'yes'},{Origin:env.SITE_ORIGIN}),env);
+  t.mock.method(globalThis,'fetch',async url=>{if(url==='https://challenges.cloudflare.com/turnstile/v0/siteverify')return Response.json({success:true,hostname:'tabtabapp.net',action:'signup'});sends++;throw new Error('Signup must not send email');});
+  const signup=()=>worker.fetch(request('/subscribe',{email:'reader@example.com',consent:'yes','cf-turnstile-response':'valid-token'},{Origin:env.SITE_ORIGIN}),env);
   assert.equal((await signup()).status,200);
   const first=sql.prepare('SELECT * FROM contacts').get();
   assert.equal(first.status,'subscribed');assert.equal(first.consent_source,'website-single-opt-in');
@@ -187,4 +187,14 @@ test('background sender batches within the D1 Free query limit and resumes witho
   await runCampaigns(env,{sendRelease,delay:async()=>{}});assert.equal(sent,6);assert.ok(queries<=50,`Used ${queries} D1 queries`);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='background'").get().state,'sending');
   queries=0;await runCampaigns(env,{sendRelease,delay:async()=>{}});assert.equal(sent,7);assert.equal(sql.prepare("SELECT state FROM campaigns WHERE id='background'").get().state,'completed');await runCampaigns(env,{sendRelease,delay:async()=>{}});assert.equal(sent,7);
  }finally{globalThis.fetch=original;}
+});
+
+test('Turnstile rejects missing, forged, expired, wrong-host and wrong-action tokens before storing a contact',async(t)=>{
+ const {env,sql}=setup();const submit=challenge=>worker.fetch(request('/subscribe',{email:'bot@example.com',consent:'yes','cf-turnstile-response':challenge},{Origin:env.SITE_ORIGIN}),env);
+ let reply={success:false,'error-codes':['timeout-or-duplicate']},outage=false;
+ t.mock.method(globalThis,'fetch',async()=>{if(outage)throw new Error('Network unavailable');return Response.json(reply);});
+ for(const challenge of [undefined,'','x'.repeat(2049),'forged'])assert.equal((await submit(challenge)).status,400);
+ for(const data of [{success:true,hostname:'opencam.app',action:'signup'},{success:true,hostname:'tabtabapp.net',action:'login'}]){reply=data;assert.equal((await submit('valid')).status,400);}
+ outage=true;assert.equal((await submit('valid')).status,503);
+ assert.equal(sql.prepare('SELECT COUNT(*) n FROM contacts').get().n,0);
 });

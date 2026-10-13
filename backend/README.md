@@ -164,3 +164,13 @@ The dashboard stores drafts, audience snapshots, login-code hashes, session hash
 and usage totals in D1. It adds one bundled Markdown parser (`marked`), no external
 frontend/CDN dependencies, and no new third-party service. No customer campaign was
 sent as part of dashboard setup.
+
+## Invisible signup protection
+
+The website uses a separate Invisible Cloudflare Turnstile widget for tabtabapp.net.
+The public site key is bundled in the signup form; TURNSTILE_SECRET is a Worker secret.
+The Subscribe click waits for a background token without further user interaction.
+The Worker validates the token, hostname, and signup action before storing a contact.
+Missing, expired, reused, or invalid tokens fail closed. Rate limiting and the honeypot remain.
+For local browser tests, override PUBLIC_TURNSTILE_SITE_KEY with Cloudflare's test key
+and use its corresponding test secret in a local Worker only; never deploy test credentials.

@@ -58,6 +58,19 @@ async function subscribe(request, env) {
   if (data.website) return json({ message:okMessage });
   const email = normalizeEmail(data.email);
   if (!email || data.consent !== 'yes') fail('Enter a valid email and agree to receive TabTab updates.');
+  required(env, ['TURNSTILE_SECRET']);
+  const challenge = data['cf-turnstile-response'];
+  if (typeof challenge !== 'string' || !challenge || challenge.length > 2048) fail('The security check could not complete. Please try again.', 400);
+  let verified;
+  try {
+    const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method:'POST', body:new URLSearchParams({secret:env.TURNSTILE_SECRET,response:challenge,remoteip:ip}),
+      signal:AbortSignal.timeout(10000)
+    });
+    if (!result.ok) throw new Error('Verification unavailable');
+    verified = await result.json();
+  } catch { fail('The security check is temporarily unavailable. Please try again.',503); }
+  if (verified.success !== true || verified.hostname !== new URL(env.SITE_ORIGIN).hostname || verified.action !== 'signup') fail('The security check could not complete. Please try again.',400);
   const name = typeof data.name === 'string' ? data.name.trim().slice(0,120) : '';
   await env.DB.batch(contactStatements(env.DB, { email, name, source:'website', external_id:email, status:'customer' }));
   // The explicit Subscribe action records single opt-in, not verified email ownership.
@@ -216,7 +229,7 @@ export default {
         response = request.headers.get('origin') === env.SITE_ORIGIN && path === '/subscribe' ? new Response(null,{ status:204 }) : json({ error:'Forbidden.' },403);
       } else if (path === '/health' && request.method === 'GET') {
         await env.DB.prepare('SELECT 1 FROM contacts LIMIT 1').first();
-        response = json({ ok:true, signup_ready:Boolean(env.RESEND_API_KEY && env.TOKEN_SECRET && env.FROM_EMAIL && env.SIGNUP_LIMITER) });
+        response = json({ ok:true, signup_ready:Boolean(env.TURNSTILE_SECRET && env.SIGNUP_LIMITER) });
       } else if (path === '/subscribe' && request.method === 'POST') response = await subscribe(request,env);
       else if (['/confirm','/unsubscribe'].includes(path) && ['GET','POST'].includes(request.method)) response = await preference(request,env,path.slice(1));
       else if (path === '/webhooks/lemonsqueezy' && request.method === 'POST') response = await lemonWebhook(request,env);
