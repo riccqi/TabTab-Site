@@ -135,6 +135,9 @@ async function resendWebhook(request, env) {
   if (!await verifyResend(env.RESEND_WEBHOOK_SECRET,raw,request.headers)) fail('Invalid signature.',401);
   const payload = parseJSON(raw);
   if (!['email.bounced','email.complained','email.suppressed'].includes(payload.type)) return json({ ignored:true });
+  // Resend emits account-wide events; another app's complaint must not alter this list.
+  const from = String(payload.data?.from || '').trim().toLowerCase();
+  if (from !== 'updates@tabtabapp.net' && !/^tabtab\s*<updates@tabtabapp\.net>$/.test(from)) return json({ ignored:true });
   const addresses = payload.data?.to;
   if (!Array.isArray(addresses) || addresses.length > 100) fail('Invalid recipients.');
   const statements = addresses.map(normalizeEmail).filter(Boolean).map(email =>
