@@ -93,13 +93,14 @@
           muted
           playsinline
           preload="none"
-          poster="/tabtab2.0-demo-poster.webp"
           width="1280"
           height="960"
         >
           <source data-src="/tabtab2.0-demo.mp4" type="video/mp4">
           Your browser does not support the video tag.
         </video>
+
+        <img id="demo-poster" src="/tabtab2.0-demo-poster.webp" alt="TabTab demo showing a searchable list of Mac windows and tabs" width="1280" height="960" fetchpriority="high" loading="eager" class="absolute inset-0 h-full w-full object-cover" />
 
         <noscript>
           <a href="/tabtab2.0-demo.mp4" class="absolute bottom-2 left-2 bg-black/80 text-white px-4 py-2 rounded-full text-sm">Watch demo</a>
@@ -125,6 +126,7 @@
     <script>
       const video = document.querySelector<HTMLVideoElement>('#demo-video');
       if (video) {
+        const poster = document.getElementById('demo-poster');
         const playButton = document.getElementById('demo-play');
         const soundToggle = document.getElementById('sound-toggle');
         const mutedIcon = document.getElementById('sound-icon-muted');
@@ -148,6 +150,7 @@
           playButton.addEventListener('click', play);
         }
         video.addEventListener('playing', () => {
+          if (poster) poster.hidden = true;
           if (playButton) playButton.hidden = true;
           if (soundToggle) soundToggle.hidden = false;
         });
