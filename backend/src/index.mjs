@@ -6,7 +6,7 @@ import { sendEmail, drain } from './outbox.mjs';
 import { reconcileStatement } from '@riccqi/email-studio/outbox';
 
 const CONSENT = 'tabtab-updates-single-opt-in-v3';
-const okMessage = 'Thanks for subscribing! You’ll receive occasional TabTab updates. Unsubscribe at any time.';
+const okMessage = "You're on the list!";
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const now = () => new Date().toISOString();
 const json = (value, status = 200) => Response.json(value, { status });
@@ -67,7 +67,7 @@ async function subscribe(request, env) {
     unsubscribed_at=NULL,confirmation_nonce=NULL,confirmation_sent_at=NULL,updated_at=?
     WHERE email=? AND status NOT IN ('subscribed','suppressed')`)
     .bind(now(),CONSENT,now(),email).run();
-  return type.includes('application/json') ? json({ message:okMessage }) : page('Thanks for subscribing',okMessage);
+  return type.includes('application/json') ? json({ message:okMessage }) : page(okMessage,'You’ll receive occasional TabTab updates. Unsubscribe at any time.');
 }
 
 async function preference(request, env, purpose) {
