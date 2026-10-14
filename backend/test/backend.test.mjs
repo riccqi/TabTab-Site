@@ -263,3 +263,11 @@ test('settings only hold the mailing address; there is no sending plan or daily 
  assert.equal((await worker.fetch(dash('/settings',{postal_address:42}),env)).status,400);
  const overview=await (await worker.fetch(dash('/overview'),env)).json();assert.deepEqual(overview.settings,{postal_address:'PO Box 1, City'});assert.equal(overview.usage,0);
 });
+
+test('subscriber list shows when and how each contact was added, and when they unsubscribed',async()=>{
+ const {env}=setup();const row=await seed(env);await seed(env,{source:'lemonsqueezy',external_id:'order-1',status:'customer'});
+ const listed=async status=>(await (await worker.fetch(dash('/contacts?q=reader&status='+status),env)).json()).contacts[0];
+ const added=await listed('subscribed');assert.equal(added.added_via,'formspree');assert.ok(Date.parse(added.added_at));assert.deepEqual(added.sources.split(',').sort(),['formspree','lemonsqueezy']);assert.equal(added.unsubscribed_at,null);
+ await worker.fetch(dash('/unsubscribe',{id:row.id}),env);
+ const gone=await listed('unsubscribed');assert.ok(Date.parse(gone.unsubscribed_at));assert.equal(gone.added_at,added.added_at);
+});
