@@ -14,7 +14,7 @@ const fail = (message, status = 400) => { throw Object.assign(new Error(message)
 function required(env, names) { if (names.some(name => !env[name])) fail('Email service is not configured yet. Please try again later.', 503); }
 
 function page(title, text, form = '') {
-  return new Response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · TabTab</title><style>body{font:18px system-ui;max-width:540px;margin:12vh auto;padding:24px;line-height:1.6;color:#17202a}button{font:inherit;border:0;border-radius:99px;background:#17202a;color:white;padding:12px 24px;cursor:pointer}a{color:inherit}</style><main><p>TabTab</p><h1>${esc(title)}</h1><p>${esc(text)}</p>${form}<p><a href="https://tabtabapp.net">Back to TabTab</a></p></main></html>`, { headers: { 'Content-Type':'text/html; charset=utf-8' } });
+  return new Response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · TabTab</title><style>body{font:18px system-ui;max-width:540px;margin:12vh auto;padding:24px;line-height:1.6;color:#17202a}button{font:inherit;border:0;border-radius:99px;background:#17202a;color:white;padding:12px 24px;cursor:pointer}a{color:inherit}</style><main><p>TabTab</p><h1>${esc(title)}</h1>${text?`<p>${esc(text)}</p>`:''}${form}<p><a href="https://tabtabapp.net">Back to TabTab</a></p></main></html>`, { headers: { 'Content-Type':'text/html; charset=utf-8' } });
 }
 
 async function bodyText(request, max = 65536) {
@@ -67,7 +67,7 @@ async function subscribe(request, env) {
     unsubscribed_at=NULL,confirmation_nonce=NULL,confirmation_sent_at=NULL,updated_at=?
     WHERE email=? AND status NOT IN ('subscribed','suppressed')`)
     .bind(now(),CONSENT,now(),email).run();
-  return type.includes('application/json') ? json({ message:okMessage }) : page(okMessage,'You’ll receive occasional TabTab updates. Unsubscribe at any time.');
+  return type.includes('application/json') ? json({ message:okMessage }) : page(okMessage,'');
 }
 
 async function preference(request, env, purpose) {
