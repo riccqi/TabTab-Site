@@ -271,3 +271,26 @@ test('subscriber list shows when and how each contact was added, and when they u
  await worker.fetch(dash('/unsubscribe',{id:row.id}),env);
  const gone=await listed('unsubscribed');assert.ok(Date.parse(gone.unsubscribed_at));assert.equal(gone.added_at,added.added_at);
 });
+
+
+test('controlled Markdown icon sections match preview and mocked delivery with unchanged sender/footer boundaries',async()=>{
+ const {featureMarkdown}=await import('@riccqi/email-studio/template');
+ const {env,sql}=setup();env.FROM_EMAIL='TabTab <richard@tabtabapp.net>';env.REPLY_TO='richard@tabtabapp.net';await seed(env);
+ const markdown=featureMarkdown({imageUrl:'https://assets.example.com/tabs.png',alt:'Window panels',title:'Your windows together',body:'Live text <script>safe as text</script>',url:'https://tabtabapp.net/features',linkText:'Explore'});
+ const d={id:'icon-update',subject:'Window news',preheader:'A useful improvement',markdown};
+ const resend=mockResend();try{
+  await worker.fetch(dash('/settings',{postal_address:'Test address'}),env);
+  assert.equal((await worker.fetch(dash('/campaign',d),env)).status,200);assert.equal(sql.prepare('SELECT markdown FROM campaigns').get().markdown,markdown);
+  const p=await(await worker.fetch(dash('/preview',d),env)).json();const editor=await(await worker.fetch(dash('/preview',{...d,editing:true}),env)).json();assert.equal(editor.html,p.html);assert.equal(editor.text,p.text);assert.ok(editor.editor.blocks.some(b=>b.feature));assert.match(p.html,/width="44" height="44" alt="Window panels"/);assert.doesNotMatch(p.html,/<script/);assert.match(p.text,/Your windows together\nLive text/);assert.doesNotMatch(p.text,/email-feature|imageUrl/);
+  await worker.fetch(dash('/campaign/'+d.id+'/test',{email:'owner@example.com'}),env);
+  const edited={...d,markdown:markdown.replace('Your windows together','Edited window title')};await worker.fetch(dash('/campaign',edited),env);
+  assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env)).status,400);
+  const editedPreview=await(await worker.fetch(dash('/preview',edited),env)).json();assert.match(editedPreview.html,/Edited window title/);
+  await worker.fetch(dash('/campaign',d),env);await worker.fetch(dash('/campaign/'+d.id+'/test',{email:'owner@example.com'}),env);
+  assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env)).status,200);assert.equal((await worker.fetch(dash('/campaign',edited),env)).status,409);
+  await worker.fetch(dash('/settings',{postal_address:'Changed after start'}),env);const {drain}=await import('../src/outbox.mjs');await drain(env);
+  const m=resend.calls.at(-1).body[0];assert.equal(m.from,'TabTab <richard@tabtabapp.net>');assert.equal(m.reply_to,'richard@tabtabapp.net');assert.doesNotMatch(m.html,/Changed after start|<script/);assert.match(m.html,/Test address/);
+  assert.equal((m.html.match(/>Unsubscribe<\/a>/g)||[]).length,1);assert.match(m.headers['List-Unsubscribe'],/token=/);assert.equal(m.headers['List-Unsubscribe-Post'],'List-Unsubscribe=One-Click');
+  const normalize=h=>h.replace(/https:\/\/updates.tabtabapp.net\/unsubscribe(?:\?token=[^"<]+)?/g,'UNSUBSCRIBE');assert.equal(normalize(m.html),normalize(p.html));assert.equal(normalize(m.text),normalize(p.text));
+ }finally{resend.restore();}
+});
