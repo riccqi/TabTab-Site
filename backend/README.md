@@ -171,3 +171,17 @@ and use its corresponding test secret in a local Worker only; never deploy test 
 ## Email addresses
 
 Updates are sent from `TabTab <richard@tabtabapp.net>` with replies to `richard@tabtabapp.net`. Public support uses `hello@tabtabapp.net`. Cloudflare Email Routing forwards both addresses directly to the owner’s verified Gmail inbox. Legacy `updates@` webhook events remain accepted for delayed bounce/complaint handling; OpenCam events are ignored. Personal sending from Gmail or Apple Mail requires a separate send-as/SMTP configuration.
+
+### TabTab free-form composer
+
+New drafts start with an empty editable body inside the existing branded header
+and footer. Click the body to write; headings, bold/italic, lists, links and HTTPS
+images are optional. There is no required section or icon workflow. Existing
+drafts open without migration and are not rewritten until the owner edits them.
+The canonical value remains Markdown and arbitrary HTML stays escaped. Sender,
+unsubscribe/footer, exact-content test checks and suppression are unchanged.
+
+Both this Worker and the central OpenCam-hosted TabTab dashboard consume the
+1.4.4 shared package archive. Publishing requires releasing these source changes
+and deploying both Workers; OpenCam's own composer keeps its existing UI. No
+asset uploads, database migrations or production draft edits are needed.

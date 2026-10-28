@@ -294,3 +294,21 @@ test('controlled Markdown icon sections match preview and mocked delivery with u
   const normalize=h=>h.replace(/https:\/\/updates.tabtabapp.net\/unsubscribe(?:\?token=[^"<]+)?/g,'UNSUBSCRIBE');assert.equal(normalize(m.html),normalize(p.html));assert.equal(normalize(m.text),normalize(p.text));
  }finally{resend.restore();}
 });
+
+
+test('free body drafts save/reload without icon fields and share preview/send HTML with required footer',async()=>{
+ const {env,sql}=setup();env.FROM_EMAIL='TabTab <richard@tabtabapp.net>';env.REPLY_TO='richard@tabtabapp.net';await seed(env);
+ const d={id:'free-body',subject:'A note written by me',preheader:'',markdown:'Hello everyone,\n\n**My own text** with [a link](https://example.com/news).\n\n- Optional bullet\n\n![Optional image](https://cdn.example.com/screenshot.png)\n\n<script>safe as text</script>'};
+ const resend=mockResend();try{
+  await worker.fetch(dash('/settings',{postal_address:'Test address'}),env);
+  assert.equal((await worker.fetch(dash('/campaign',d),env)).status,200);
+  const overview=await(await worker.fetch(dash('/overview'),env)).json();assert.equal(overview.campaigns.find(c=>c.id===d.id).markdown,d.markdown);
+  const clean=await(await worker.fetch(dash('/preview',d),env)).json(),edit=await(await worker.fetch(dash('/preview',{...d,editing:'body'}),env)).json();
+  assert.equal(edit.html,clean.html);assert.equal(edit.text,clean.text);assert.match(edit.editor.html,/data-editor-body/);assert.doesNotMatch(clean.html,/<script|data-editor|contenteditable/);assert.match(clean.text,/Hello everyone/);
+  await worker.fetch(dash('/campaign/'+d.id+'/test',{email:'owner@example.com'}),env);
+  assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env)).status,200);
+  const {drain}=await import('../src/outbox.mjs');await drain(env);const m=resend.calls.at(-1).body[0];
+  const normalize=h=>h.replace(/https:\/\/updates.tabtabapp.net\/unsubscribe(?:\?token=[^"<]+)?/g,'UNSUBSCRIBE');assert.equal(normalize(m.html),normalize(clean.html));assert.equal(normalize(m.text),normalize(clean.text));
+  assert.equal(m.from,'TabTab <richard@tabtabapp.net>');assert.equal(m.reply_to,'richard@tabtabapp.net');assert.match(m.html,/Test address/);assert.equal((m.html.match(/>Unsubscribe<\/a>/g)||[]).length,1);assert.match(m.headers['List-Unsubscribe'],/token=/);assert.equal(m.headers['List-Unsubscribe-Post'],'List-Unsubscribe=One-Click');
+ }finally{resend.restore();}
+});
