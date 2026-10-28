@@ -360,3 +360,28 @@ test('new sender label does not widen TabTab webhook acceptance to other identit
   const response=await worker.fetch(request('/webhooks/resend',raw,{'svix-id':id,'svix-timestamp':ts,'svix-signature':'v1,'+signature}),env);assert.equal((await response.json()).ignored,true);assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'subscribed');
  }
 });
+
+
+test('TabTab footer brand and unit removal preserve the other postal lines, sender and draft',async()=>{
+ const {env,sql}=setup();env.FROM_EMAIL='Richard from TabTab <richard@tabtabapp.net>';env.REPLY_TO='richard@tabtabapp.net';await seed(env);
+ const postalLines='123 Example Street\n#01-02\nSingapore 123456',beforeFooter='Richard Qi / TabTab\n'+postalLines,afterFooter='TabTab\n123 Example Street\nSingapore 123456';
+ const d={id:'footer-identity',subject:'My own subject',preheader:'My own preview',markdown:'Owner-written body stays unchanged.'},resend=mockResend();
+ try{
+  assert.equal((await worker.fetch(dash('/settings',{postal_address:beforeFooter}),env)).status,200);
+  await worker.fetch(dash('/campaign',d),env);await worker.fetch(dash('/campaign/'+d.id+'/test',{email:'owner@example.com'}),env);
+  const before=await(await worker.fetch(dash('/preview',d),env)).json(),saved={...sql.prepare('SELECT * FROM campaigns WHERE id=?').get(d.id)};
+  assert.equal((await worker.fetch(dash('/settings',{postal_address:afterFooter}),env)).status,200);
+  assert.deepEqual({...sql.prepare('SELECT * FROM campaigns WHERE id=?').get(d.id)},saved);
+  assert.equal(sql.prepare('SELECT postal_address FROM dashboard_settings').get().postal_address,afterFooter);
+  const preview=await(await worker.fetch(dash('/preview',d),env)).json(),editing=await(await worker.fetch(dash('/preview',{...d,editing:'body'}),env)).json();
+  assert.equal(preview.html,before.html.replace('Richard Qi / TabTab','TabTab').replace('<br>#01-02',''));assert.equal(preview.text,before.text.replace('Richard Qi / TabTab','TabTab').replace('\n#01-02',''));
+  assert.equal(editing.html,preview.html);assert.equal(editing.text,preview.text);assert.match(preview.html,/TabTab<br>123 Example Street<br>Singapore 123456/);assert.doesNotMatch(preview.html,/Richard Qi|Richard from TabTab|#01-02/);assert.doesNotMatch(preview.text,/#01-02/);
+  assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env)).status,400);
+  assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/test',{email:'owner@example.com'}),env)).status,200);
+  const testMessage=resend.calls.at(-1).body;assert.equal(testMessage.html,preview.html.replace('/unsubscribe','/dashboard/test-unsubscribe'));assert.equal(testMessage.from,env.FROM_EMAIL);assert.equal(testMessage.reply_to,env.REPLY_TO);
+  assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env)).status,200);const {drain}=await import('../src/outbox.mjs');await drain(env);
+  const actual=resend.calls.at(-1).body[0],normalize=h=>h.replace(/https:\/\/updates.tabtabapp.net\/unsubscribe(?:\?token=[^"<]+)?/g,'UNSUBSCRIBE');
+  assert.equal(normalize(actual.html),normalize(preview.html));assert.equal(normalize(actual.text),normalize(preview.text));assert.equal(actual.from,env.FROM_EMAIL);assert.equal(actual.reply_to,env.REPLY_TO);assert.equal((actual.html.match(/>Unsubscribe<\/a>/g)||[]).length,1);
+  assert.equal(actual.headers['List-Unsubscribe-Post'],'List-Unsubscribe=One-Click');assert.equal(sql.prepare('SELECT postal_address FROM campaigns WHERE id=?').get(d.id).postal_address,afterFooter);
+ }finally{resend.restore();}
+});

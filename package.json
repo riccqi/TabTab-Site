@@ -34,7 +34,7 @@
     "wrangler": "^4.150.0"
   },
   "dependencies": {
-    "@riccqi/email-studio": "file:packages/releases/riccqi-email-studio-1.4.7.tgz"
+    "@riccqi/email-studio": "file:packages/releases/riccqi-email-studio-1.4.8.tgz"
   },
   "overrides": {
     "@tailwindcss/typography": {
