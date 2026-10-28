@@ -22,16 +22,16 @@
     "astro": "astro"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.12",
     "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/typography": "^0.5.20",
-    "astro": "^7.3.8",
+    "astro": "^7.4.2",
     "marked": "^18.1.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "wrangler": "^4.150.0"
+    "wrangler": "^4.152.0"
   },
   "dependencies": {
     "@riccqi/email-studio": "file:packages/releases/riccqi-email-studio-1.4.8.tgz"
