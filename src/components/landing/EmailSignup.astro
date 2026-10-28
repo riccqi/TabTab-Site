@@ -1,0 +1,117 @@
+---
+import { Image } from "astro:assets";
+import tabtabImage from "../../../public/tabtab-icon.png";
+const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAAFV_2fxAyQceVFS7";
+const endpoint = import.meta.env.PUBLIC_EMAIL_ENDPOINT || "https://updates.tabtabapp.net/subscribe";
+---
+
+<section class="py-10">
+  <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:max-w-7xl lg:px-8">
+    <div class="flex flex-col items-center gap-8 lg:gap-12">
+      <div class="flex flex-col items-center gap-4 lg:gap-6">
+        <Image src={tabtabImage} width={80} densities={[1, 2]} format="webp" quality={85} loading="lazy" alt="TabTab Logo" class="h-20 w-auto mb-2" />
+        <h2 class="text-3xl font-medium tracking-tight sm:text-4xl">Stay Updated</h2>
+        <p class="text-primary-950/70 dark:text-primary-200/70 text-lg text-center max-w-lg mb-2">
+          Get occasional TabTab updates. Unsubscribe at any time.
+        </p>
+        <form
+          id="release-signup"
+          action={endpoint}
+          method="POST"
+          class="flex flex-col items-center gap-4 w-full max-w-sm"
+        >
+          <div class="flex flex-col gap-3 w-full">
+            <div class="w-full">
+              <label for="name" class="sr-only">Name</label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                autocomplete="given-name"
+                maxlength="120"
+                placeholder="Name (optional)"
+                class="block w-4/5 mx-auto rounded-lg border bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-accent-400"
+              />
+            </div>
+            <div class="w-full">
+              <label for="email" class="sr-only">Email</label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                required
+                autocomplete="email"
+                maxlength="254"
+                placeholder="Email"
+                class="block w-4/5 mx-auto rounded-lg border bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-accent-400"
+              />
+            </div>
+          </div>
+          <div class="absolute -left-[9999px]" aria-hidden="true">
+            <label for="signup-website">Leave this field empty</label>
+            <input id="signup-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+          <input type="hidden" name="consent" value="yes" />
+          <div id="signup-turnstile" class="cf-turnstile" data-sitekey={sitekey} data-action="signup"></div>
+          <button
+            type="submit"
+            class="w-4/5 mx-auto items-center justify-center h-12 font-medium rounded-full focus-visible:outline-black focus:outline-none inline-flex bg-black border-2 border-black text-white duration-200 focus-visible:ring-black hover:bg-white hover:border-black hover:text-black px-4 py-3 text-center mt-4"
+          >
+            Subscribe
+          </button>
+          <p class="w-4/5 text-sm text-center text-primary-950/70 dark:text-primary-200/70">
+            By subscribing, you agree to receive TabTab updates by email. <a href="/privacy/" class="underline">Privacy policy</a>.
+          </p>
+          <p id="signup-status" role="status" aria-live="polite" class="text-sm text-center w-4/5"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("#release-signup");
+  const status = document.querySelector<HTMLParagraphElement>("#signup-status");
+  const button = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (form && status && button) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      button.disabled = true;
+      button.textContent = "Submitting…";
+      status.textContent = "";
+      try {
+        // Invisible verification finishes in the background; the user's one click waits for it.
+        const turnstileWindow = window as Window & {turnstile?: {getResponse: (id: string) => string; reset: (id: string) => void}};
+        const deadline = Date.now() + 20000;
+        let challenge = '';
+        while (!challenge && Date.now() < deadline) {
+          try { challenge = turnstileWindow.turnstile?.getResponse('#signup-turnstile') || ''; } catch { /* Widget is still loading. */ }
+          if (!challenge) await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        if (!challenge) throw new Error('The security check could not load. Please check your connection or content blocker and try again.');
+        const payload = Object.fromEntries(new FormData(form));
+        payload['cf-turnstile-response'] = challenge;
+        const response = await fetch(form.action, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(20000),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Could not subscribe. Please try again.");
+        status.textContent = result.message;
+        form.reset();
+      } catch (error) {
+        status.textContent = error instanceof Error && error.name !== "TimeoutError" && error.name !== "TypeError"
+          ? error.message : "Could not reach the signup service. Please try again in a moment.";
+      } finally {
+        try { (window as Window & {turnstile?: {reset: (id: string) => void}}).turnstile?.reset('#signup-turnstile'); } catch { /* Failed script loads are handled above. */ }
+        button.disabled = false;
+        button.textContent = "Subscribe";
+      }
+    });
+  }
+</script>

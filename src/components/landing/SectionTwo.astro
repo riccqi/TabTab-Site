@@ -1,0 +1,206 @@
+---
+import { Image } from "astro:assets";
+import { supportedApps } from "../../data/supportedApps";
+---
+<section>
+  <div
+    class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 pb-16 scroll-mt-20">
+      
+    <!-- First section -->
+    <div
+      class="grid grid-cols-1 gap-12 mt-6 items-center list-none lg:grid-cols-5 lg:gap-8">
+      <div class="text-center lg:text-left lg:col-span-2">
+        <div>
+
+                  <!-- Section icon -->
+    <div class="flex justify-center lg:justify-start mb-6">
+      <div class="bg-gradient-to-br from-blue-300 to-blue-500 rounded-2xl md:rounded-3xl p-5">
+        <img src="/symbols/macwindow.on.rectangle.svg" alt="Mac window icon" class="w-8 h-8 md:w-12 md:h-12 filter brightness-0 invert">
+      </div>
+    </div>
+          <h2
+            class="text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
+            Effortless windows switching
+          </h2>
+          <p class="text-base mt-4 text-gray-500">
+            Simple and fast.
+            Multiple windows from the same app? No problem.
+            Identify and switch between them easily.  
+          </p>
+        </div>
+      </div>
+      <div
+        class="lg:col-span-3 aspect-[5/3] w-full max-w-[800px] mx-auto rounded-xl overflow-hidden shadow-xl">
+        <video
+          data-lazy-video
+          autoplay
+          loop
+          muted
+          playsinline
+          preload="none"
+          poster="/window-poster.webp"
+          width="1280"
+          height="768"
+          class="w-full h-full object-cover"
+        >
+          <source data-src="/window.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <hr class="my-12 border-gray-200">
+
+    <!-- Second section (updated with video) -->
+    <div
+      class="grid grid-cols-1 gap-12 mt-6 items-center list-none lg:grid-cols-5 lg:gap-8">
+      <div class="text-center lg:text-left lg:col-span-2">
+        <div>
+                  <!-- Section icon -->
+    <div class="flex justify-center lg:justify-start mb-6">
+      <div class="bg-gradient-to-br from-orange-200 to-orange-400 rounded-2xl md:rounded-3xl p-5">
+        <img src="/symbols/rectangle.grid.1x2.fill.svg" alt="Tab icon" class="w-8 h-8 md:w-12 md:h-12 filter brightness-0 invert">
+      </div>
+    </div>
+          <h2
+            class="text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
+            Tabs tracked automatically, ready when you need them
+          </h2>
+          <p class="text-base mt-4 text-gray-500">
+            Some say this is a gamechanger for their workflow. 
+            <br>
+            Finding the right tab shouldn’t mean digging through cluttered app interfaces. Whether you’re browsing, coding, or designing, TabTab brings your tabs together. Sort by recency or alphabetically, and group tabs by window or app to suit your workflow.
+            <br>
+            <strong>No browser extensions or plugins required.</strong>
+          </p>
+        </div>
+      </div>
+      <div
+        class="lg:col-span-3 aspect-[5/3] w-full max-w-[800px] mx-auto rounded-xl overflow-hidden shadow-xl">
+        <video
+          data-lazy-video
+          autoplay
+          loop
+          muted
+          playsinline
+          preload="none"
+          poster="/tabs-poster.webp"
+          width="1280"
+          height="768"
+          class="w-full h-full object-cover"
+        >
+          <source data-src="/tabs.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    </div>
+
+    <!-- Apps with tab management support section -->
+    <div class="mx-auto pt-12 lg:py-16">
+      <h2 class="text-xl font-medium text-center mb-8">Apps with tab tracking</h2>
+      
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        {supportedApps.map((app) => (
+          <div class="flex flex-col items-center">
+            <Image
+              alt={`${app.name} logo`}
+              src={app.logo}
+              width={64}
+              densities={[1, 2]}
+              format="webp"
+              quality={85}
+              loading="lazy"
+              decoding="async"
+              class:list={["w-16 h-16 object-contain", app.logoPadding]}
+            />
+            <p class="mt-2 text-sm text-center">{app.name}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <hr class="my-12 border-gray-200">
+
+    <!-- Third section (updated with video) -->
+    <div
+      class="grid grid-cols-1 gap-12 mt-6 items-center list-none lg:grid-cols-5 lg:gap-8">
+      <div class="text-center lg:text-left lg:col-span-2">
+        <div>
+
+                  <!-- Section icon -->
+    <div class="flex justify-center lg:justify-start mb-6">
+      <div class="bg-gradient-to-br from-slate-600 to-slate-900 rounded-2xl md:rounded-3xl p-5">
+        <img src="/symbols/magnifyingglass.svg" alt="Search icon" class="w-8 h-8 md:w-11 md:h-11 filter brightness-0 invert">
+      </div>
+    </div>
+          <h2
+            class="text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
+            Powerful search
+          </h2>
+          <p class="text-base mt-4 text-gray-500">
+            When you have many windows or tabs open, searching makes everything faster. TabTab lets you find what you need by URL, tab title, app name, and more — making your workflow super efficient.
+          </p>
+          <a
+            href="/guides/search-open-tabs-on-mac/"
+            class="mt-5 inline-flex items-center font-semibold text-accent-600 hover:text-accent-700"
+          >
+            Learn how to search open tabs on Mac →
+          </a>
+        </div>
+      </div>
+      <div
+        class="lg:col-span-3 aspect-[5/3] w-full max-w-[800px] mx-auto rounded-xl overflow-hidden shadow-xl">
+        <video
+          data-lazy-video
+          autoplay
+          loop
+          muted
+          playsinline
+          preload="none"
+          poster="/search-poster.webp"
+          width="1280"
+          height="768"
+          class="w-full h-full object-cover"
+        >
+          <source data-src="/search.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const lazyVideos = document.querySelectorAll<HTMLVideoElement>("video[data-lazy-video]");
+
+  const loadVideo = (video: HTMLVideoElement) => {
+    if (video.dataset.loaded === "true") return;
+
+    video.querySelectorAll<HTMLSourceElement>("source[data-src]").forEach((source) => {
+      if (source.dataset.src) source.src = source.dataset.src;
+    });
+
+    video.dataset.loaded = "true";
+    video.load();
+    void video.play().catch(() => {});
+  };
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          loadVideo(entry.target as HTMLVideoElement);
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: "300px 0px" },
+    );
+
+    lazyVideos.forEach((video) => observer.observe(video));
+  } else {
+    lazyVideos.forEach(loadVideo);
+  }
+</script>

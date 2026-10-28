@@ -1,0 +1,40 @@
+@import "../../node_modules/tailwindcss/index.css";
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Inter", sans-serif;
+  --color-black: #121212;
+  --color-blue-50: #EBEDFF;
+  --color-accent-50: #E0F6FF;
+  --color-accent-100: #CCEDFF;
+  --color-accent-200: #99DBFF;
+  --color-accent-300: #66C8FF;
+  --color-accent-400: #33B5FF;
+  --color-accent-500: #00A2FF;
+  --color-accent-600: #008AE6;
+  --color-accent-700: #006BB3;
+  --color-accent-800: #004D80;
+  --color-accent-900: #002E4D;
+
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-Italic-latin.woff2") format("woff2");
+}
+
+:root {
+  font-family: "Inter", sans-serif;
+}

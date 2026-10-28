@@ -1,0 +1,163 @@
+---
+import { supportedAppGroups } from "../../data/supportedApps";
+import TabTabScreenshot from "../../components/TabTabScreenshot.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const title = "How to Search All Open Tabs on Mac | TabTab";
+const description = "Learn how to search open browser, editor, Finder, and app tabs on a Mac by title, URL, window name, or app name from one keyboard-first switcher.";
+const siteUrl = Astro.site ?? new URL("https://tabtabapp.net");
+const pageUrl = new URL("/guides/search-open-tabs-on-mac/", siteUrl).href;
+const imageUrl = new URL("/og-image.png", siteUrl).href;
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: title,
+  description,
+  image: imageUrl,
+  datePublished: "2026-08-15",
+  dateModified: "2026-09-06",
+  mainEntityOfPage: pageUrl,
+  author: {
+    "@type": "Person",
+    name: "Richard Qi",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "TabTab",
+    url: new URL("/", siteUrl).href,
+  },
+  about: {
+    "@type": "Thing",
+    name: "Searching open tabs on macOS",
+  },
+};
+
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  socialImage="/og-image.png"
+  ogType="article"
+  structuredData={structuredData}
+>
+  <article class="bg-white">
+    <div class="mx-auto max-w-6xl px-8 py-20 md:px-12 md:py-28">
+      <header class="mx-auto max-w-4xl">
+        <h1 class="text-5xl font-medium leading-[1.04] tracking-tight text-black font-display md:text-6xl">
+          How to search all open tabs on Mac
+        </h1>
+        <p class="mt-7 max-w-3xl text-lg leading-8 text-gray-600">
+          macOS can switch apps with the default Command + Tab shortcut and cycle through an app's windows with Command + Backtick, but it cannot search tabs across browsers, editors, Finder, and other apps. TabTab puts app names, window titles, tab titles, and URLs in one search.
+        </p>
+      </header>
+
+      <figure class="mx-auto mt-16 max-w-3xl">
+        <TabTabScreenshot
+          alt="TabTab displaying a searchable list of open browser, editor, design, and Finder tabs on a Mac"
+          class="h-auto w-full rounded-2xl border border-gray-200"
+        />
+        <figcaption class="mt-3 text-sm text-gray-500">
+          Search app names, window titles, tab titles, and URLs.
+        </figcaption>
+      </figure>
+
+      <section class="mx-auto mt-16 max-w-4xl">
+        <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Search open tabs from one shortcut</h2>
+        <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+          <p>
+            Open TabTab from any app and type what you remember. Search for a website, document, repository, URL, window title, or app name. Choose a result to switch directly to that window or tab.
+          </p>
+          <p class="mt-4">
+            TabTab tracks tabs in supported apps, so you do not have to switch to a browser or editor first and search again there.
+          </p>
+          <p class="mt-6 font-medium text-black">
+            Open TabTab <span class="mx-2 text-gray-300">→</span> Type a title, URL, or app <span class="mx-2 text-gray-300">→</span> Press Enter
+          </p>
+        </div>
+      </section>
+
+      <section class="mx-auto mt-20 max-w-4xl space-y-12">
+        <div class="max-w-3xl text-lg leading-8 text-gray-600">
+          <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Why Command + Tab cannot search tabs</h2>
+          <p class="mt-5">
+            Command + Tab shows each running app once. Ten Safari tabs still appear as one Safari icon. Command + Backtick cycles through windows in the current app. Neither shortcut searches individual browser or editor tabs.
+          </p>
+          <p class="mt-3">
+            Apple's <a class="text-accent-600 hover:text-accent-700" href="https://support.apple.com/guide/mac-help/work-with-app-windows-mchlp2469/mac" target="_blank" rel="noopener noreferrer">window-switching guide</a> covers the built-in shortcuts. TabTab adds a searchable view of supported windows and tabs.
+          </p>
+        </div>
+        <div class="max-w-3xl text-lg leading-8 text-gray-600">
+          <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Start searching</h2>
+          <ol class="mt-5 list-decimal space-y-4 pl-6">
+            <li><a class="text-accent-600 hover:text-accent-700" href="https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg">Download TabTab</a> and open it on a Mac running macOS 14 or later.</li>
+            <li>Follow the setup prompts and grant the requested Accessibility access so TabTab can track and switch windows and tabs.</li>
+            <li>Choose a keyboard shortcut in TabTab's settings. Use a combination that does not conflict with shortcuts you already use.</li>
+            <li>Open a few tabs in a supported app. Invoke TabTab, type part of a tab's title or URL, select the result, and press Enter.</li>
+          </ol>
+          <p class="mt-5">No browser extension is required. The free plan tracks your five most recent windows and tabs; <a class="text-accent-600 hover:text-accent-700" href="/pricing/">Pro removes that limit</a>.</p>
+        </div>
+      </section>
+
+      <section class="mx-auto mt-20 max-w-4xl">
+        <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">What to type when you cannot remember the tab</h2>
+        <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+          <p>Start with the part you remember. These examples work when a matching tab or window is open and tracked:</p>
+          <ul class="mt-5 list-disc space-y-3 pl-6">
+            <li><strong class="text-black">A website:</strong> type <code>github.com</code> to look for an open GitHub tab by URL.</li>
+            <li><strong class="text-black">A document:</strong> type a distinctive word from its title, such as <code>roadmap</code>.</li>
+            <li><strong class="text-black">An app:</strong> type <code>Finder</code> when you remember the app but not the window title.</li>
+          </ul>
+          <p class="mt-5">If the results are too broad, use a more distinctive part of the title or URL. Search only covers tracked windows and tabs, so a closed page will not appear.</p>
+        </div>
+      </section>
+
+      <section class="mx-auto mt-20 max-w-4xl">
+        <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">If a tab does not appear</h2>
+        <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+          <ul class="list-disc space-y-4 pl-6">
+            <li>Check that the tab is still open and its app supports tab tracking. Window switching and individual tab tracking are different features.</li>
+            <li>On the free plan, switch to the missing window or tab first so it is among the five most recent items, then search again.</li>
+            <li>Check that TabTab has the Accessibility access requested during setup, especially if windows are also missing or switching does not work.</li>
+            <li>Try the latest TabTab release to get recent tab-tracking and switching fixes.</li>
+          </ul>
+          <p class="mt-5">Still having trouble? <a class="text-accent-600 hover:text-accent-700" href="mailto:hello@tabtabapp.net">Contact support</a> with the app name and version, macOS version, and your Mac's system language.</p>
+        </div>
+      </section>
+
+      <section class="mx-auto mt-20 max-w-4xl">
+        <h2 class="text-3xl font-medium tracking-tight text-black font-display md:text-4xl">Browsers, editors, and Mac apps</h2>
+        <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
+          {supportedAppGroups.map((group, index) => (
+            <p class:list={[index > 0 && "mt-3"]}>
+              <strong class="font-semibold text-black">{group.label}:</strong>{" "}
+              {new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(group.names)}.
+            </p>
+          ))}
+          <p class="mt-6">
+            Support depends on how each app exposes its tabs to macOS. Check the <a class="text-accent-600 hover:text-accent-700" href="/#faq">TabTab FAQ</a> for the current list.
+          </p>
+          <h3 class="mt-10 text-xl font-semibold text-black font-display">Can macOS search every open browser tab by itself?</h3>
+          <p class="mt-2">Some browsers, such as Chrome, include their own tab search within the app. macOS does not have one built-in search across tabs from multiple browsers and apps at the OS level.</p>
+          <h3 class="mt-7 text-xl font-semibold text-black font-display">Search or window previews?</h3>
+          <p class="mt-2">
+            Search is useful when you remember a title, URL, or app. Window previews are useful when you recognize a window by sight. Read <a class="text-accent-600 hover:text-accent-700" href="/compare/alttab/">TabTab vs AltTab</a> for a closer comparison.
+          </p>
+        </div>
+      </section>
+
+      <div class="mx-auto mt-16 max-w-4xl rounded-2xl bg-gray-950 p-8 text-center text-white md:p-10">
+        <div>
+          <h2 class="text-3xl font-medium tracking-tight font-display md:text-4xl">Supercharge navigation on your Mac</h2>
+          <p class="mx-auto mt-4 max-w-2xl text-lg leading-8 text-gray-300">Try TabTab free on Intel and Apple Silicon Macs running macOS 14 or later.</p>
+        </div>
+        <a
+          href="https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-7 inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold text-black transition hover:bg-sky-100"
+        >Download TabTab</a>
+      </div>
+    </div>
+  </article>
+</BaseLayout>

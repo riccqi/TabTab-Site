@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # astro check (@astrojs/check) only supports TypeScript 5 and 6.
+      # Remove once it supports 7, or after moving to @astrojs/ts-content-mapper (needs TS 7.1+).
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
