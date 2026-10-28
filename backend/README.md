@@ -184,4 +184,15 @@ unsubscribe/footer, exact-content test checks and suppression are unchanged.
 Both this Worker and the central OpenCam-hosted TabTab dashboard consume the
 1.4.4 shared package archive. Publishing requires releasing these source changes
 and deploying both Workers; OpenCam's own composer keeps its existing UI. No
-asset uploads, database migrations or production draft edits are needed.
+asset uploads or production draft edits are needed for the composer itself.
+
+### Recoverable draft deletion (1.4.6)
+
+Use Delete draft in the list or editor, confirm, then Undo if needed. Deleted
+drafts remain in Deleted drafts and can be restored after reload. No permanent
+delete action is provided. Started/sent campaigns are protected on the server.
+Apply `0006_draft_trash.sql` before deploying this version; the central OpenCam
+Worker/database also needs `0005_draft_trash.sql`. These additive migrations keep
+existing content intact. Tests exercise recovery, stale saves and delete/start
+races entirely in local synthetic databases; no real draft should be deleted
+as a deployment smoke test. Email headers are centered genuine icons only.

@@ -39,10 +39,18 @@ export async function dashboardAPI(req,env,services){
  const identity=await session(req,env);if(!identity)bad('Sign in to your TabTab dashboard.',401);
  if(path==='/logout'&&req.method==='POST'){await env.DB.prepare('DELETE FROM dashboard_sessions WHERE digest=?').bind(identity).run();return json({ok:true},200,{'Set-Cookie':cookie('')});}
  if(path==='/overview'&&req.method==='GET'){
-  const [config,counts,usage,campaigns]=await Promise.all([settings(env),env.DB.prepare('SELECT status,COUNT(*) total FROM contacts GROUP BY status').all(),sentLastDay(env),env.DB.prepare(`SELECT c.*,COUNT(d.id) total,SUM(CASE WHEN d.status='sent' THEN 1 ELSE 0 END) sent,SUM(CASE WHEN d.status IN ('queued','retry','sending') THEN 1 ELSE 0 END) remaining,SUM(CASE WHEN d.status='skipped' THEN 1 ELSE 0 END) skipped,SUM(CASE WHEN d.status IN ('failed','ambiguous') THEN 1 ELSE 0 END) errors FROM campaigns c LEFT JOIN deliveries d ON d.campaign_id=c.id AND d.kind='announcement' GROUP BY c.id ORDER BY c.created_at DESC LIMIT 50`).all()]);
+  const [config,counts,usage,campaigns]=await Promise.all([settings(env),env.DB.prepare('SELECT status,COUNT(*) total FROM contacts GROUP BY status').all(),sentLastDay(env),env.DB.prepare(`SELECT c.*,COUNT(d.id) total,SUM(CASE WHEN d.status='sent' THEN 1 ELSE 0 END) sent,SUM(CASE WHEN d.status IN ('queued','retry','sending') THEN 1 ELSE 0 END) remaining,SUM(CASE WHEN d.status='skipped' THEN 1 ELSE 0 END) skipped,SUM(CASE WHEN d.status IN ('failed','ambiguous') THEN 1 ELSE 0 END) errors FROM campaigns c LEFT JOIN deliveries d ON d.campaign_id=c.id AND d.kind='announcement' WHERE c.deleted_at IS NULL GROUP BY c.id ORDER BY c.created_at DESC LIMIT 50`).all()]);
   // Completion is derived from the outbox; the stored state only records draft/sending/paused.
   for(const c of campaigns.results)if(c.state==='sending'&&!c.remaining)c.state=c.errors?'needs_review':'completed';
   return json({email:env.DASHBOARD_EMAIL,settings:config,counts:counts.results,usage,campaigns:campaigns.results});
+ }
+ if(path==='/drafts/deleted'&&req.method==='GET')return json({drafts:(await env.DB.prepare("SELECT id,subject,created_at,updated_at,deleted_at FROM campaigns WHERE state='draft' AND deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT 100").all()).results});
+ const trashAction=path.match(/^\/campaign\/([a-zA-Z0-9-]{1,80})\/(delete|restore)$/);
+ if(trashAction&&req.method==='POST'){
+  const [,id,verb]=trashAction,remove=verb==='delete',stamp=now();
+  const row=await env.DB.prepare(`UPDATE campaigns SET deleted_at=?,updated_at=? WHERE id=? AND state='draft' AND deleted_at IS ${remove?'NULL':'NOT NULL'} AND NOT EXISTS(SELECT 1 FROM deliveries WHERE campaign_id=campaigns.id) RETURNING id`).bind(remove?stamp:null,stamp,id).first();
+  if(!row){const existing=await env.DB.prepare('SELECT state,deleted_at FROM campaigns WHERE id=?').bind(id).first();if(!existing)bad('Draft not found.',404);if(existing.state!=='draft'||await env.DB.prepare('SELECT id FROM deliveries WHERE campaign_id=? LIMIT 1').bind(id).first())bad('Only unsent drafts can be deleted or restored.',409);if(remove?existing.deleted_at===null:existing.deleted_at!==null)bad('Draft changed. Reload and try again.',409);}
+  return json({ok:true,deleted:remove});
  }
  if(path==='/contacts'&&req.method==='GET'){
   const search=(u.searchParams.get('q')||'').slice(0,120).replace(/[\\%_]/g,x=>'\\'+x),status=u.searchParams.get('status')||'',page=Math.max(0,Math.min(100000,Number(u.searchParams.get('page'))||0));
@@ -62,12 +70,12 @@ export async function dashboardAPI(req,env,services){
  }
  if(path==='/campaign'&&req.method==='POST'){
   const d=safeDraft(await input(req)),id=d.id||crypto.randomUUID();if(!/^[a-zA-Z0-9-]{1,80}$/.test(id))bad('Invalid draft ID.');
-  const row=await env.DB.prepare(`INSERT INTO campaigns(id,subject,markdown,preheader,created_at,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET subject=excluded.subject,markdown=excluded.markdown,preheader=excluded.preheader,updated_at=excluded.updated_at,test_hash=CASE WHEN campaigns.subject=excluded.subject AND campaigns.markdown=excluded.markdown AND campaigns.preheader=excluded.preheader THEN campaigns.test_hash ELSE NULL END WHERE campaigns.state='draft' RETURNING id`).bind(id,d.subject,d.markdown,d.preheader,now(),now()).first();
+  const row=await env.DB.prepare(`INSERT INTO campaigns(id,subject,markdown,preheader,created_at,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET subject=excluded.subject,markdown=excluded.markdown,preheader=excluded.preheader,updated_at=excluded.updated_at,test_hash=CASE WHEN campaigns.subject=excluded.subject AND campaigns.markdown=excluded.markdown AND campaigns.preheader=excluded.preheader THEN campaigns.test_hash ELSE NULL END WHERE campaigns.state='draft' AND campaigns.deleted_at IS NULL RETURNING id`).bind(id,d.subject,d.markdown,d.preheader,now(),now()).first();
   if(!row)bad('A campaign that has started cannot be edited. Create a new draft.',409);return json({id});
  }
  const action=path.match(/^\/campaign\/([a-zA-Z0-9-]+)\/(test|start|pause|resume)$/);
  if(action&&req.method==='POST'){
-  const [,id,verb]=action,c=await env.DB.prepare('SELECT * FROM campaigns WHERE id=?').bind(id).first();if(!c)bad('Campaign not found.',404);
+  const [,id,verb]=action,c=await env.DB.prepare('SELECT * FROM campaigns WHERE id=? AND deleted_at IS NULL').bind(id).first();if(!c)bad('Campaign not found.',404);
   const config=await settings(env);
   if(verb==='test'){
    const d=await input(req),email=services.normalizeEmail(d?.email||env.DASHBOARD_EMAIL);if(!email)bad('Enter a valid test address.');if(!c.subject.trim()||!c.markdown.trim())bad('Add a subject and message first.');
@@ -84,8 +92,8 @@ export async function dashboardAPI(req,env,services){
   if(!env.RESEND_WEBHOOK_SECRET)bad('Bounce handling must be configured first.',503);
   // The state transition and audience snapshot are atomic. Double clicks do not rebuild the audience.
   await env.DB.batch([
-   env.DB.prepare("INSERT OR IGNORE INTO deliveries(id,campaign_id,contact_id,kind,available_at) SELECT lower(hex(randomblob(16))),?,id,'announcement',? FROM contacts WHERE status='subscribed' AND EXISTS (SELECT 1 FROM campaigns WHERE id=? AND state='draft' AND subject=? AND markdown=? AND preheader=? AND test_hash=?)").bind(id,Math.floor(Date.now()/1000),id,c.subject,c.markdown,c.preheader,c.test_hash),
-   env.DB.prepare("UPDATE campaigns SET state='sending',postal_address=?,started_at=?,updated_at=? WHERE id=? AND state='draft' AND subject=? AND markdown=? AND preheader=? AND test_hash=?").bind(config.postal_address,now(),now(),id,c.subject,c.markdown,c.preheader,c.test_hash)
+   env.DB.prepare("INSERT OR IGNORE INTO deliveries(id,campaign_id,contact_id,kind,available_at) SELECT lower(hex(randomblob(16))),?,id,'announcement',? FROM contacts WHERE status='subscribed' AND EXISTS (SELECT 1 FROM campaigns WHERE id=? AND state='draft' AND deleted_at IS NULL AND subject=? AND markdown=? AND preheader=? AND test_hash=?)").bind(id,Math.floor(Date.now()/1000),id,c.subject,c.markdown,c.preheader,c.test_hash),
+   env.DB.prepare("UPDATE campaigns SET state='sending',postal_address=?,started_at=?,updated_at=? WHERE id=? AND state='draft' AND deleted_at IS NULL AND subject=? AND markdown=? AND preheader=? AND test_hash=?").bind(config.postal_address,now(),now(),id,c.subject,c.markdown,c.preheader,c.test_hash)
   ]);
   const started=await env.DB.prepare('SELECT state,subject,markdown,preheader FROM campaigns WHERE id=?').bind(id).first();
   if(!started||started.state==='draft'||started.subject!==c.subject||started.markdown!==c.markdown||started.preheader!==c.preheader)bad('Draft changed. Reload, send a new test, and review it again.',409);

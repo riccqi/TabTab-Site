@@ -13,6 +13,7 @@ function setup() {
   sql.exec(readFileSync(new URL('../migrations/0003_dashboard.sql',import.meta.url),'utf8'));
   sql.exec(readFileSync(new URL('../migrations/0004_uncapped_sending.sql',import.meta.url),'utf8'));
   sql.exec(readFileSync(new URL('../migrations/0005_shared_outbox.sql',import.meta.url),'utf8'));
+  sql.exec(readFileSync(new URL('../migrations/0006_draft_trash.sql',import.meta.url),'utf8'));
   const wrap = (query,args=[]) => ({
     bind(...values){return wrap(query,values);},
     async first(){return sql.prepare(query).get(...args)||null;},
@@ -311,4 +312,35 @@ test('free body drafts save/reload without icon fields and share preview/send HT
   const normalize=h=>h.replace(/https:\/\/updates.tabtabapp.net\/unsubscribe(?:\?token=[^"<]+)?/g,'UNSUBSCRIBE');assert.equal(normalize(m.html),normalize(clean.html));assert.equal(normalize(m.text),normalize(clean.text));
   assert.equal(m.from,'TabTab <richard@tabtabapp.net>');assert.equal(m.reply_to,'richard@tabtabapp.net');assert.match(m.html,/Test address/);assert.equal((m.html.match(/>Unsubscribe<\/a>/g)||[]).length,1);assert.match(m.headers['List-Unsubscribe'],/token=/);assert.equal(m.headers['List-Unsubscribe-Post'],'List-Unsubscribe=One-Click');
  }finally{resend.restore();}
+});
+
+
+test('draft trash is authenticated, recoverable, scoped and never deletes campaign/delivery history',async()=>{
+ const {env,sql}=setup(),d={id:'trash-tabtab',subject:'Keep this subject',markdown:'Original **body**',preheader:'Original preview'};
+ assert.equal((await worker.fetch(dash('/campaign',d),env)).status,200);await worker.fetch(dash('/campaign',{...d,id:'keep-tabtab'}),env);
+ assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/delete',{},''),env)).status,401);
+ const cross=new Request('https://updates.tabtabapp.net/dashboard/api/campaign/'+d.id+'/delete',{method:'POST',headers:{Authorization:'Bearer admin-secret',Origin:'https://evil.example','X-TabTab-Dashboard':'1'},body:'{}'});assert.equal((await worker.fetch(cross,env)).status,403);
+ for(let i=0;i<2;i++)assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/delete',{}),env)).status,200);
+ const deleted=sql.prepare('SELECT * FROM campaigns WHERE id=?').get(d.id);assert.ok(deleted.deleted_at);assert.equal(deleted.markdown,d.markdown);assert.equal(deleted.preheader,d.preheader);
+ const active=await(await worker.fetch(dash('/overview'),env)).json();assert.deepEqual(active.campaigns.map(c=>c.id),['keep-tabtab']);
+ const trash=await(await worker.fetch(dash('/drafts/deleted'),env)).json();assert.equal(trash.drafts[0].id,d.id);
+ assert.equal((await worker.fetch(dash('/campaign',{...d,markdown:'Stale autosave'}),env)).status,409);assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/test',{email:'owner@example.com'}),env)).status,404);assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env)).status,404);
+ for(let i=0;i<2;i++)assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/restore',{}),env)).status,200);
+ assert.equal(sql.prepare('SELECT deleted_at FROM campaigns WHERE id=?').get(d.id).deleted_at,null);assert.equal(sql.prepare('SELECT markdown FROM campaigns WHERE id=?').get(d.id).markdown,d.markdown);
+ sql.prepare("UPDATE campaigns SET state='sending' WHERE id=?").run(d.id);assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/delete',{}),env)).status,409);assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/restore',{}),env)).status,409);assert.equal(sql.prepare('SELECT COUNT(*) n FROM deliveries').get().n,0);
+});
+
+test('delete winning a concurrent TabTab launch prevents audience creation and sending',async()=>{
+ const {env,sql}=setup();await seed(env);const d={id:'trash-race',subject:'Race',markdown:'Safe body',preheader:''};const resend=mockResend();try{
+  await worker.fetch(dash('/settings',{postal_address:'Test address'}),env);await worker.fetch(dash('/campaign',d),env);await worker.fetch(dash('/campaign/'+d.id+'/test',{email:'owner@example.com'}),env);
+  const batch=env.DB.batch;let removed=false;env.DB.batch=async statements=>{if(!removed){removed=true;assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/delete',{}),env)).status,200);}return batch(statements);};
+  assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env)).status,409);assert.ok(removed);assert.ok(sql.prepare('SELECT deleted_at FROM campaigns WHERE id=?').get(d.id).deleted_at);assert.equal(sql.prepare('SELECT state FROM campaigns WHERE id=?').get(d.id).state,'draft');assert.equal(sql.prepare('SELECT COUNT(*) n FROM deliveries').get().n,0);assert.equal(resend.calls.length,1);
+ }finally{resend.restore();}
+});
+
+test('draft-trash migration preserves preexisting TabTab draft bytes',()=>{
+ const db=new DatabaseSync(':memory:');try{for(const name of ['0001_subscribers.sql','0002_subscription_basis.sql','0003_dashboard.sql','0004_uncapped_sending.sql','0005_shared_outbox.sql'])db.exec(readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8'));
+ db.prepare("INSERT INTO campaigns(id,subject,markdown,preheader,created_at,updated_at) VALUES('existing','Subject','Preserved body','Preview','2026-01-01','2026-01-01')").run();const before={...db.prepare('SELECT * FROM campaigns').get()};db.exec(readFileSync(new URL('../migrations/0006_draft_trash.sql',import.meta.url),'utf8'));const after={...db.prepare('SELECT * FROM campaigns').get()};assert.equal(after.deleted_at,null);delete after.deleted_at;assert.deepEqual(after,before);
+ db.prepare("UPDATE campaigns SET deleted_at='2026-10-28' WHERE id='existing'").run();assert.throws(()=>db.prepare("UPDATE campaigns SET state='sending' WHERE id='existing'").run(),/CHECK constraint failed/);
+ }finally{db.close();}
 });
