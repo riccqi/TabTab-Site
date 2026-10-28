@@ -18,7 +18,7 @@
   "vars": {
     "SITE_ORIGIN": "https://tabtabapp.net",
     "PUBLIC_URL": "https://updates.tabtabapp.net",
-    "FROM_EMAIL": "TabTab <richard@tabtabapp.net>",
+    "FROM_EMAIL": "Richard from TabTab <richard@tabtabapp.net>",
     "REPLY_TO": "richard@tabtabapp.net",
     "DASHBOARD_EMAIL": "xiaochean@gmail.com",
     "LEMONSQUEEZY_STORE_ID": "125728",

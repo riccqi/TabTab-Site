@@ -111,7 +111,7 @@ test('the legacy one-off send endpoint is gone; campaigns are the only bulk send
 });
 
 test('Resend suppression webhook is signed and refuses stale timestamps',async()=>{
- for (const from of ['TabTab <updates@tabtabapp.net>','TabTab <richard@tabtabapp.net>','richard@tabtabapp.net']) {
+ for (const from of ['TabTab <updates@tabtabapp.net>','TabTab <richard@tabtabapp.net>','richard@tabtabapp.net','Richard from TabTab <richard@tabtabapp.net>','"Richard from TabTab" <richard@tabtabapp.net>']) {
   const {env,sql}=setup();await seed(env);
   const raw=JSON.stringify({type:'email.complained',data:{from,to:['reader@example.com']}});
   const signed=async timestamp=>request('/webhooks/resend',raw,{'svix-id':'evt-1','svix-timestamp':String(timestamp),'svix-signature':`v1,${Buffer.from(await hmac(new TextEncoder().encode('test'),`evt-1.${timestamp}.${raw}`)).toString('base64')}`});
@@ -182,7 +182,7 @@ test('webhook acceptance events settle a held delivery, but only for TabTab mail
  const post=async event=>{const raw=JSON.stringify(event),timestamp=Math.floor(Date.now()/1000),id='evt-'+Math.random();const signature=Buffer.from(await hmac(new TextEncoder().encode('test'),`${id}.${timestamp}.${raw}`)).toString('base64');return worker.fetch(request('/webhooks/resend',raw,{'svix-id':id,'svix-timestamp':String(timestamp),'svix-signature':`v1,${signature}`}),env);};
  const event=from=>({type:'email.delivered',data:{from,email_id:'resend-1',to:['reader0@held.example.com'],tags:[{name:'app',value:'tabtab'},{name:'delivery_id',value:'held-0000'}]}});
  assert.equal((await (await post(event('OpenCam <richard@opencam.app>'))).json()).ignored,true);assert.equal(sql.prepare('SELECT status FROM deliveries').get().status,'ambiguous');
- assert.equal((await post(event('TabTab <richard@tabtabapp.net>'))).status,200);
+ assert.equal((await post(event('Richard from TabTab <richard@tabtabapp.net>'))).status,200);
  assert.deepEqual({...sql.prepare('SELECT status,message_id FROM deliveries').get()},{status:'sent',message_id:'resend-1'});
 });
 
@@ -343,4 +343,20 @@ test('draft-trash migration preserves preexisting TabTab draft bytes',()=>{
  db.prepare("INSERT INTO campaigns(id,subject,markdown,preheader,created_at,updated_at) VALUES('existing','Subject','Preserved body','Preview','2026-01-01','2026-01-01')").run();const before={...db.prepare('SELECT * FROM campaigns').get()};db.exec(readFileSync(new URL('../migrations/0006_draft_trash.sql',import.meta.url),'utf8'));const after={...db.prepare('SELECT * FROM campaigns').get()};assert.equal(after.deleted_at,null);delete after.deleted_at;assert.deepEqual(after,before);
  db.prepare("UPDATE campaigns SET deleted_at='2026-10-28' WHERE id='existing'").run();assert.throws(()=>db.prepare("UPDATE campaigns SET state='sending' WHERE id='existing'").run(),/CHECK constraint failed/);
  }finally{db.close();}
+});
+
+
+test('TabTab serializes the requested actual From display name with the same verified address and reply-to',async()=>{
+ const config=JSON.parse(readFileSync(new URL('../wrangler.jsonc',import.meta.url),'utf8')).vars;assert.equal(config.FROM_EMAIL,'Richard from TabTab <richard@tabtabapp.net>');assert.equal(config.REPLY_TO,'richard@tabtabapp.net');
+ const {env}=setup();env.FROM_EMAIL=config.FROM_EMAIL;env.REPLY_TO=config.REPLY_TO;await seed(env);const d={id:'new-sender',subject:'A plain note',preheader:'',markdown:'A plain owner-written body.'},resend=mockResend();try{
+  await worker.fetch(dash('/settings',{postal_address:'Sender address'}),env);await worker.fetch(dash('/campaign',d),env);assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/test',{email:'owner@example.com'}),env)).status,200);assert.equal(resend.calls[0].body.from,config.FROM_EMAIL);assert.equal(resend.calls[0].body.reply_to,config.REPLY_TO);
+  assert.equal((await worker.fetch(dash('/campaign/'+d.id+'/start',{confirmation:d.subject}),env)).status,200);const {drain}=await import('../src/outbox.mjs');await drain(env);const actual=resend.calls.at(-1).body[0];assert.equal(actual.from,config.FROM_EMAIL);assert.equal(actual.reply_to,config.REPLY_TO);assert.equal(actual.headers['List-Unsubscribe-Post'],'List-Unsubscribe=One-Click');assert.match(actual.headers['List-Unsubscribe'],/token=/);assert.match(actual.html,/Sender address/);assert.equal((actual.html.match(/>Unsubscribe<\/a>/g)||[]).length,1);assert.doesNotMatch(actual.html,/Richard from TabTab|border-radius|background:#f4f5f8/);
+ }finally{resend.restore();}
+});
+
+test('new sender label does not widen TabTab webhook acceptance to other identities or domains',async()=>{
+ for(const from of ['Richard from TabTab <richard@opencam.app>','Richard from OpenCam <richard@tabtabapp.net>','Richard from TabTab <other@tabtabapp.net>']){
+  const {env,sql}=setup();await seed(env);const raw=JSON.stringify({type:'email.complained',data:{from,to:['reader@example.com']}}),id='evt-sender',ts=String(Math.floor(Date.now()/1000)),signature=Buffer.from(await hmac(new TextEncoder().encode('test'),`${id}.${ts}.${raw}`)).toString('base64');
+  const response=await worker.fetch(request('/webhooks/resend',raw,{'svix-id':id,'svix-timestamp':ts,'svix-signature':'v1,'+signature}),env);assert.equal((await response.json()).ignored,true);assert.equal(sql.prepare('SELECT status FROM contacts').get().status,'subscribed');
+ }
 });

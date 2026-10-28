@@ -123,7 +123,7 @@ async function resendWebhook(request, env) {
   const payload = parseJSON(raw);
   // Resend emits account-wide events; another app's complaint must not alter this list.
   const from = String(payload.data?.from || '').trim().toLowerCase();
-  if (!/^(?:(?:updates|richard)@tabtabapp\.net|tabtab\s*<(?:updates|richard)@tabtabapp\.net>)$/.test(from)) return json({ ignored:true });
+  if (!/^(?:(?:updates|richard)@tabtabapp\.net|tabtab\s*<(?:updates|richard)@tabtabapp\.net>|(?:richard from tabtab|"richard from tabtab")\s*<richard@tabtabapp\.net>)$/.test(from)) return json({ ignored:true });
   const statements = [];
   if (['email.bounced','email.complained','email.suppressed'].includes(payload.type)) {
     const addresses = payload.data?.to;
