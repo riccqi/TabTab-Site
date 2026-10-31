@@ -20,13 +20,13 @@
     "astro": "astro"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.12",
     "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/typography": "^0.5.20",
-    "astro": "^7.3.8",
-    "marked": "^18.1.1",
+    "astro": "^7.4.4",
+    "marked": "^18.1.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3"
   },
