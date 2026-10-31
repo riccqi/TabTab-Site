@@ -1,9 +1,124 @@
+---
+const sourceIcons = {
+  x: { src: "/symbols/x-twitter.svg", label: "X (Twitter)" },
+  youtube: { src: "/symbols/youtube.svg", label: "YouTube" },
+  producthunt: { src: "/symbols/producthunt.svg", label: "Product Hunt" },
+};
 
+type Review = {
+  quote: string;
+  name: string;
+  href?: string;
+  avatar?: string;
+  source?: keyof typeof sourceIcons;
+};
+
+const reviews: Review[] = [
+  {
+    quote: "This is a fantastic product, this is how Apple should have built the tab navigation!",
+    name: "Pablo Sanzo",
+    href: "https://www.linkedin.com/in/pablosanzo/",
+  },
+  {
+    quote: "I really think this is a great app, it's been well built. I think it's a good replacement for the default Mac experience.",
+    name: "Robin Bilgil",
+    avatar: "/avatars/robin-bilgil.jpg",
+    href: "https://www.youtube.com/watch?v=1mHopTxGLNw",
+    source: "youtube",
+  },
+  {
+    quote: "A big fan of anything that makes my Mac more fun and useful to use - TabTab does exactly that. I find it really useful when I have a ton of Cursor tab/files open and I'm referring to documentation on a browser.",
+    name: "Gabe Perez",
+    avatar: "/avatars/gabe-perez.jpg",
+    href: "https://www.producthunt.com/@gabe",
+    source: "producthunt",
+  },
+  {
+    quote: "我用几个月了，这玩意tm好用炸了，推荐所有人下载！",
+    name: "Megabits",
+    avatar: "/avatars/megabits.jpg",
+    href: "https://x.com/Megabits_mzq/status/1859111667294236854",
+    source: "x",
+  },
+  {
+    quote: "This product is very underrated, I think. It works better than other window switchers I tried, like Alttab. Design is so beautiful, and details are very polished.",
+    name: "Sakamoto",
+    avatar: "/avatars/sakamoto.jpg",
+    href: "https://www.producthunt.com/products/tabtab-2/reviews",
+    source: "producthunt",
+  },
+  {
+    quote: "I've been using TabTab for over a month, and it works great. It's snappy and doesn't get in the way when I'm working. Richard updates TabTab regularly and actively listens to user feedback.",
+    name: "Andre",
+    href: "https://x.com/aelew_/status/1859670424331878902",
+    source: "x",
+  },
+  {
+    quote: "TabTab is my latest favorite app 💛",
+    name: "Hieu Dinh",
+    avatar: "/avatars/hieu-dinh.jpg",
+    href: "https://x.com/hieudinh_/status/1860697475754922452",
+    source: "x",
+  },
+  {
+    quote: "Every now and then a utility comes around that you didn't know you needed.",
+    name: "ScreenCastsONLINE",
+    avatar: "/avatars/screencastsonline.jpg",
+    href: "https://www.youtube.com/watch?v=w_Bk-eMUils",
+    source: "youtube",
+  },
+  {
+    quote: "Been using TabTab for my window management the past week. Really like how it lets me search through tabs while I'm context switching between projects. Simple but gets the job done!",
+    name: "Naveen Naidu",
+    avatar: "/avatars/naveen-naidu.jpg",
+    href: "https://x.com/naveennaidu_m/status/1860717396014907408",
+    source: "x",
+  },
+  {
+    quote: "TabTab is fast and lets you navigate through individual tabs with a standard hotkey.",
+    name: "Neil Chudleigh",
+    avatar: "/avatars/neil-chudleigh.jpg",
+    href: "https://x.com/neilsuperduper",
+    source: "x",
+  },
+  {
+    quote: "I tested it and was sold in minutes, just got myself a licence. macOs really needs a better window switcher, and this one is the best I've tried.",
+    name: "Marcel Cruz",
+    avatar: "/avatars/marcel-cruz.jpg",
+    href: "https://www.producthunt.com/posts/tabtab-2",
+    source: "producthunt",
+  },
+  {
+    quote: "一言で言えば ⌘ + tab の進化系、あるいは Stage ManagerとMission Controlの互換機能。特に一画面でマルチタスクをする人にお勧めしたい。",
+    name: "nyanyo🧊",
+    avatar: "/avatars/nyanyo.jpg",
+    href: "https://x.com/nyanyo_oy/status/1863983187648770259",
+    source: "x",
+  },
+  {
+    quote: "I'm so glad I paid for TabTab. This is smooth, visually pleasing, developer is more than reactive and listens to suggestions.",
+    name: "Eden",
+  },
+  {
+    quote: "Amazing app. AltTab App didn't work well for me, but this is almost perfect.",
+    name: "Jeffrey Zang",
+    avatar: "/avatars/jeffrey-zang.jpg",
+    href: "https://www.producthunt.com/products/tabtab-2/reviews",
+    source: "producthunt",
+  },
+];
+
+// Both rows hold every review (the second one rotated) so they have identical
+// widths and loop in lockstep. Each row is rendered three times: the scroller
+// starts on the middle copy and jumps by one copy at the edges, so it can be
+// scrubbed forever in either direction.
+const half = Math.ceil(reviews.length / 2);
+const rows = [reviews, [...reviews.slice(half), ...reviews.slice(0, half)]];
+const copies = [0, 1, 2];
+---
 
 <section>
-  <div
-    class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-12"
-  >
+  <div class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-12">
     <!-- Section icon -->
     <div class="flex justify-center mb-6">
       <div class="bg-gradient-to-br from-green-300 to-green-500 rounded-2xl md:rounded-3xl p-5">
@@ -12,172 +127,188 @@
     </div>
 
     <div>
-      <p
-        class="text-center text-4xl tracking-tight font-medium text-black md:text-5xl font-display"
-      >
-        Trusted by users<span class="sm:block"></span>
+      <p class="text-center text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
+        Trusted by users
       </p>
       <p class="text-center text-lg text-gray-500 mt-4 max-w-2xl mx-auto">
-        TabTab is the go-to window and tab switcher for 5,000+ Mac users.<br> See what some of them are saying.      
+        TabTab is the go-to window and tab switcher for 5,000+ Mac users.<br> See what some of them are saying.
       </p>
     </div>
-    <ul
-      class="mt-6 lg:mt-12 grid grid-cols-1 gap-8 lg:gap-8 sm:grid-cols-2 lg:grid-cols-3"
+  </div>
+
+  <div data-review-carousel>
+    <div
+      class="review-scroller overflow-x-auto pb-4"
+      aria-label="User reviews"
+      role="region"
+      tabindex="0"
+      data-review-scroller
     >
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              This is a fantastic product, this is how Apple should have built the tab navigation!
-            </p>
+      <div class="flex w-max flex-col gap-4 md:gap-6">
+        {rows.map((row, rowIndex) => (
+          <div class:list={["flex gap-4 md:gap-6", rowIndex === 1 && "pl-[calc(var(--review-card-w)/2)]"]}>
+            {copies.map((copy) =>
+              row.map((review) => (
+                <figure
+                  class="review-card relative flex flex-col justify-between rounded-panel border border-gray-200 bg-gray-50 p-6"
+                  aria-hidden={copy !== 1 ? "true" : undefined}
+                >
+                  <blockquote class="text-sm md:text-base text-gray-600 font-normal">
+                    "{review.quote}"
+                  </blockquote>
+                  <figcaption class="mt-6 flex items-center justify-between gap-4">
+                    <div class="flex min-w-0 items-center gap-3">
+                      {review.avatar ? (
+                        <img
+                          src={review.avatar}
+                          alt=""
+                          width="36"
+                          height="36"
+                          class="h-9 w-9 shrink-0 rounded-full bg-gray-200 object-cover"
+                        >
+                      ) : (
+                        <span
+                          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-500"
+                          aria-hidden="true"
+                        >
+                          {review.name.charAt(0)}
+                        </span>
+                      )}
+                      <p class="truncate text-sm md:text-base text-gray-500 font-display font-semibold">
+                        {review.href ? (
+                          <a
+                            href={review.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            tabindex={copy !== 1 ? -1 : undefined}
+                              class="hover:text-accent-500 inline-flex items-center gap-1"
+                          >
+                            {review.name}
+                          </a>
+                        ) : (
+                          review.name
+                        )}
+                      </p>
+                    </div>
+                    {review.source && (
+                      <img
+                        src={sourceIcons[review.source].src}
+                        alt={sourceIcons[review.source].label}
+                        title={sourceIcons[review.source].label}
+                        class="w-5 h-5 opacity-50"
+                      >
+                    )}
+                  </figcaption>
+                </figure>
+              ))
+            )}
           </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">
-              <a href="https://www.linkedin.com/in/pablosanzo/" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Pablo Sanzo <span>↗</span></a>
-            </p>
-          </footer>
-
-        </div>
-      </li>
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              "A big fan of anything that makes my Mac more fun and useful to use - TabTab does exactly that. I find it really useful when I have a ton of Cursor tab/files open and I'm referring to documentation on a browser."
-            </p>
-          </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">
-              <a href="https://www.producthunt.com/@gabe" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Gabe Perez<span>↗</span></a>
-            </p>
-          </footer>
-
-        </div>
-      </li>
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div class="absolute bottom-2 right-2">
-            <img src="/symbols/x-twitter.svg" alt="X (Twitter) icon" class="w-5 h-5 text-gray-400 opacity-60">
-          </div>
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              "我用几个月了，这玩意tm好用炸了，推荐所有人下载！"
-            </p>
-          </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">
-              <a href="https://x.com/Megabits_mzq/status/1859111667294236854" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Megabits <span>↗</span></a>
-            </p>
-          </footer>
-
-        </div>
-      </li>
-
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div class="absolute bottom-2 right-2">
-            <img src="/symbols/x-twitter.svg" alt="X (Twitter) icon" class="w-5 h-5 text-gray-400 opacity-60">
-          </div>
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              "I've been using TabTab for over a month, and it works great. It's snappy and doesn't get in the way when I'm working. Richard updates TabTab regularly and actively listens to user feedback."
-            </p>
-          </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">
-              <a href="https://x.com/aelew_/status/1859670424331878902" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Andre <span>↗</span></a>
-            </p>
-          </footer>
-
-        </div>
-      </li>
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div class="absolute bottom-2 right-2">
-            <img src="/symbols/x-twitter.svg" alt="X (Twitter) icon" class="w-5 h-5 text-gray-400 opacity-60">
-          </div>
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              "TabTab is my latest favorite app 💛"
-            </p>
-          </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">
-              <a href="https://x.com/hieudinh_/status/1860697475754922452" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Hieu Dinh <span>↗</span></a>
-            </p>
-          </footer>
-
-        </div>
-      </li>
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div class="absolute bottom-2 right-2">
-            <img src="/symbols/x-twitter.svg" alt="X (Twitter) icon" class="w-5 h-5 text-gray-400 opacity-60">
-          </div>
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              "Been using TabTab for my window management the past week. Really like how it lets me search through tabs while I'm context switching between projects. Simple but gets the job done!"
-            </p>
-          </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">
-              <a href="https://x.com/naveennaidu_m/status/1860717396014907408" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Naveen Naidu <span>↗</span></a>
-            </p>
-          </footer>
-
-        </div>
-      </li>
-      
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div class="absolute bottom-2 right-2">
-            <img src="/symbols/x-twitter.svg" alt="X (Twitter) icon" class="w-5 h-5 text-gray-400 opacity-60">
-          </div>
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              "TabTab is fast and lets you navigate through individual tabs with a standard hotkey."
-            </p>
-          </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">
-              <a href="https://x.com/neilsuperduper" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">Neil Chudleigh<span>↗</span></a>
-            </p>
-          </footer>
-
-        </div>
-      </li>
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div class="absolute bottom-2 right-2">
-            <img src="/symbols/x-twitter.svg" alt="X (Twitter) icon" class="w-5 h-5 text-gray-400 opacity-60">
-          </div>
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              "一言で言えば ⌘ + tab の進化系、あるいは Stage ManagerとMission Controlの互換機能。特に一画面でマルチタスクをする人にお勧めしたい。"
-            </p>
-          </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">
-              <a href="https://x.com/nyanyo_oy/status/1863983187648770259" target="_blank" rel="noopener noreferrer" class="hover:text-accent-500 inline-flex items-center gap-1">nyanyo🧊<span>↗</span></a>
-            </p>
-          </footer>
-
-        </div>
-      </li>
-      <li>
-        <div class="h-full flex flex-col justify-between relative">
-          <div>
-            <p class="text-sm md:text-base lg:text-base text-gray-500 mt-4 font-normal">
-              "I'm so glad I paid for TabTab. This is smooth, visually pleasing, developer is more than reactive and listens to suggestions."
-            </p>
-          </div>
-          <footer class="mt-8 pb-2">
-            <p class="text-sm md:text-base lg:text-base text-gray-500 font-display font-semibold">Eden</p>
-          </footer>
-
-        </div>
-      </li>
-    </ul>
+        ))}
+      </div>
+    </div>
   </div>
 </section>
 
+<style>
+  [data-review-carousel] {
+    --review-card-w: 300px;
+  }
+
+  @media (min-width: 768px) {
+    [data-review-carousel] {
+      --review-card-w: 360px;
+    }
+  }
+
+  .review-card {
+    width: var(--review-card-w);
+    flex-shrink: 0;
+  }
+
+  .review-scroller {
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  }
+
+  .review-scroller::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+<script>
+  const SPEED = 40; // px per second
+  const RESUME_DELAY = 2000; // ms after the user stops interacting
+
+  document.querySelectorAll<HTMLElement>("[data-review-carousel]").forEach((root) => {
+    const scroller = root.querySelector<HTMLElement>("[data-review-scroller]");
+    const firstRow = scroller?.firstElementChild?.firstElementChild as HTMLElement | null;
+    if (!scroller || !firstRow) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const cards = () => Array.from(firstRow.children) as HTMLElement[];
+
+    // Width of one copy of a row: the distance between the first card of copy 1 and copy 2.
+    let loopWidth = 0;
+    const measure = () => {
+      const all = cards();
+      const perCopy = all.length / 3;
+      loopWidth = all[perCopy].offsetLeft - all[0].offsetLeft;
+    };
+
+    let position = 0; // float accumulator; scrollLeft rounds on some browsers
+    const setPosition = (value: number) => {
+      if (value < loopWidth * 0.5) value += loopWidth;
+      else if (value > loopWidth * 1.5) value -= loopWidth;
+      position = value;
+      scroller.scrollLeft = value;
+    };
+
+    let touching = false;
+    let pausedUntil = 0;
+    const pause = () => {
+      pausedUntil = performance.now() + RESUME_DELAY;
+    };
+
+    // Native scrolling (trackpad, touch, keyboard) counts as interaction.
+    scroller.addEventListener("scroll", () => {
+      if (Math.abs(scroller.scrollLeft - position) > 1) {
+        pause();
+        setPosition(scroller.scrollLeft);
+      }
+    }, { passive: true });
+
+    scroller.addEventListener("focusin", pause);
+
+    // Hold still while a finger is on the carousel, so swipes aren't fought.
+    scroller.addEventListener("touchstart", () => (touching = true), { passive: true });
+    const release = () => {
+      touching = false;
+      pause();
+    };
+    scroller.addEventListener("touchend", release);
+    scroller.addEventListener("touchcancel", release);
+
+    window.addEventListener("resize", () => {
+      const offset = position - loopWidth;
+      measure();
+      setPosition(loopWidth + offset);
+    });
+
+    measure();
+    setPosition(loopWidth);
+
+    if (reducedMotion) return;
+
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(now - last, 100);
+      last = now;
+      if (!touching && now > pausedUntil) {
+        setPosition(position + (SPEED * dt) / 1000);
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+</script>

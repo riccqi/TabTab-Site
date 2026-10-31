@@ -13,7 +13,9 @@
     "build": "astro build",
     "check": "astro check",
     "validate:routes": "node scripts/validate-routes.mjs",
-    "verify": "npm run check && npm run build && npm run validate:routes",
+    "validate:billing": "node scripts/validate-billing.mjs",
+    "validate:content": "node scripts/validate-site-content.mjs",
+    "verify": "npm run validate:billing && npm run check && npm run build && npm run validate:routes && npm run validate:content",
     "preview": "astro preview",
     "astro": "astro"
   },

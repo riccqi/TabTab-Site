@@ -1,15 +1,19 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import PricingComponent from "../components/landing/Pricing.astro";
 import EmailSignup from "../components/landing/EmailSignup.astro";
 import Faq from "../components/infopages/Faq.astro";
+import SubscriptionPricing from "../components/landing/SubscriptionPricing.astro";
+import { subscriptionPlan, planPrice } from "../data/billing.mjs";
+
+const title = `TabTab Pricing | ${subscriptionPlan.trialDays}-Day Free Trial, then ${planPrice}`;
+const description = `TabTab is ${planPrice} after a ${subscriptionPlan.trialDays}-day free trial, for ${subscriptionPlan.devices} Mac. Cancel anytime.`;
 ---
 <BaseLayout
-  title="TabTab Pricing | One-Time Purchase for Mac"
-  description="Compare TabTab's free and Pro plans for one, two, or three Macs. Pay once for lifetime access and future updates."
+  title={title}
+  description={description}
 >
   <div>
-    <PricingComponent />
+    <SubscriptionPricing />
     <EmailSignup />
     <Faq />
   </div>

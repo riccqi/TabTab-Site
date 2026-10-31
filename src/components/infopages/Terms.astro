@@ -1,3 +1,6 @@
+---
+import { planPrice, subscriptionPlan } from "../../data/billing.mjs";
+---
 <section>
   <div
     class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-24">
@@ -15,18 +18,16 @@
     <div>
       <div
         class="mx-auto max-w-[40rem] prose-base prose text-gray-500 prose-h3:text-black prose-a:font-semibold prose-a:text-accent-300 hover:prose-a:text-black">
-        <p>
-          These Terms and Conditions ("Terms") apply to the TabTab application (hereinafter referred to as the "Application") for macOS devices, created by QI ZHI (hereinafter referred to as the "Service Provider") as a Freemium service.
-        </p>
+        <p>These Terms and Conditions ("Terms") apply to the TabTab application (hereinafter referred to as the "Application") for macOS devices, created by QI ZHI (hereinafter referred to as the "Service Provider"). New customers use TabTab through a paid subscription.</p>
+        <h3>Subscriptions</h3>
+        <p>TabTab is {planPrice} after a {subscriptionPlan.trialDays}-day free trial. The subscription renews automatically every {subscriptionPlan.interval} until you cancel. Each subscription covers {subscriptionPlan.devices} Mac. Cancelling stops future renewals; TabTab stays available until the end of the trial or paid period. If a subscription payment is fully refunded, the subscription is also cancelled immediately, which ends access. Existing lifetime licenses keep working on the number of Macs they came with.</p>
         <p>
           By downloading or using the Application, you are agreeing to be bound by these Terms. You are advised to read these Terms carefully before using the Application. Unauthorized reproduction, modification of the Application, any part of the Application, or the Service Provider's trademarks is strictly prohibited. You shall not attempt to extract the source code of the Application, translate the Application into other languages, or create derivative versions. All trademarks, copyrights, database rights, and other intellectual property rights related to the Application remain the exclusive property of the Service Provider.
         </p>
         <p>
           The Service Provider is committed to ensuring the Application is as useful and efficient as possible. As such, the Service Provider reserves the right to make changes to the Application or to charge for its services, at any time and for any reason. The Service Provider will notify you of any charges associated with the Application or its services.
         </p>
-        <p>
-          The Application does not collect or store any personal data. However, it is your responsibility to maintain the security of your device and access to the Application. The Service Provider strongly advises against tampering with your device's operating system, as it may result in security vulnerabilities, malware exposure, or cause the Application to malfunction.
-        </p>
+        <p>License activation and validation use the licensing information described in the <a href="/privacy/">Privacy Policy</a>. It is your responsibility to maintain the security of your device and access to the Application. The Service Provider strongly advises against tampering with your device's operating system, as it may result in security vulnerabilities, malware exposure, or cause the Application to malfunction.</p>
         <p>
           The Service Provider does not warrant that the Application will function at full capacity at all times. The Service Provider shall not be held liable for any lack of functionality due to issues beyond their control.
         </p>

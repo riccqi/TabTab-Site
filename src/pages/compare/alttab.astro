@@ -1,6 +1,7 @@
 ---
 import TabTabScreenshot from "../../components/TabTabScreenshot.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import DownloadCta from "../../components/global/DownloadCta.astro";
 
 const title = "TabTab vs AltTab: Windows and Tabs in One Search";
 const description = "Compare TabTab's window-and-tab search with AltTab's visual window switching for Mac.";
@@ -95,7 +96,7 @@ const comparisonRows = [
 
       <section class="mx-auto mt-20 max-w-5xl">
         <h2 class="mb-8 text-3xl font-medium tracking-tight text-black font-display md:text-4xl">At a glance</h2>
-        <div class="overflow-x-auto rounded-2xl border border-gray-200">
+        <div class="overflow-x-auto rounded-panel border border-gray-200">
           <table class="w-full min-w-[760px] border-collapse text-left text-sm md:text-base">
             <thead class="border-b border-gray-300 text-black">
               <tr>
@@ -138,18 +139,7 @@ const comparisonRows = [
           </p>
         </div>
 
-        <div class="mx-auto mt-16 max-w-4xl rounded-2xl bg-gray-950 p-8 text-center text-white md:p-10">
-          <div>
-            <h2 class="text-3xl font-medium tracking-tight font-display md:text-4xl">One search for every window and tab</h2>
-            <p class="mx-auto mt-4 max-w-2xl text-lg leading-8 text-gray-300">Your next task is already open somewhere. Find it with TabTab.</p>
-          </div>
-          <a
-            href="https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="mt-7 inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold text-black transition hover:bg-sky-100"
-          >Download TabTab</a>
-        </div>
+        <DownloadCta standalone={false} title="One search for every window and tab" description="Your next task is already open somewhere. Find it with TabTab." />
       </section>
 
       <p class="mx-auto mt-8 max-w-4xl text-sm leading-6 text-gray-400">
