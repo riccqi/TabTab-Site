@@ -17,6 +17,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TABTAB_SUBSCRIPTION_ROLLOUT: "on"
+      TABTAB_POLAR_CHECKOUT_URL: https://api.polar.sh/v1/checkout-links/polar_cl_xUfKGtMMTdza7ZCvzGAjePjlTzEtGgVEbBeBK2S3v8Q/redirect
+      TABTAB_POLAR_PORTAL_URL: https://polar.sh/tabtabapp/portal
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7

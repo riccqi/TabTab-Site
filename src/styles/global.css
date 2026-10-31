@@ -18,6 +18,10 @@
   --color-accent-800: #004D80;
   --color-accent-900: #002E4D;
 
+  /* Corner radii shared with the nav bar: panels sit 15px around a 16px button. */
+  --radius-button: 1rem;
+  --radius-panel: 31px;
+
 }
 @font-face {
   font-family: "Inter";

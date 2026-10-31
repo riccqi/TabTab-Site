@@ -1,5 +1,9 @@
 ---
 import { supportedAppGroups } from "../../data/supportedApps";
+import { subscriptionPlan, planPrice } from "../../data/billing.mjs";
+import FaqItem from "./FaqItem.astro";
+
+const { trialDays } = subscriptionPlan;
 ---
 <section aria-labelledby="faq-section" id="faq">  
   <div
@@ -62,107 +66,15 @@ import { supportedAppGroups } from "../../data/supportedApps";
             </div>
           </div>
         </div>
-        <div
-          x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
-        >
-          <button
-            @click="setActiveAccordion(id)"
-            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
-          >
-            <span>Is the app free to use?</span>
-            <svg
-              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
-              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
-              :class="{ '-rotate-[45deg]': activeAccordion==id }"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 6v12m6-6H6"></path></svg
-            >
-          </button>
-          <div x-show="activeAccordion==id" x-collapse="">
-            <div class="p-4 pt-2 text-zinc-500">
-              Yes, you can download and use the app for free. However, to unlock unlimited tracking of windows and tabs, you can upgrade to the Pro tier.
-            </div>
-          </div>
-        </div>
-        <div
-          x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
-        >
-          <button
-            @click="setActiveAccordion(id)"
-            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
-          >
-            <span
-              >Is a subscription required?</span
-            >
-            <svg
-              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
-              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
-              :class="{ '-rotate-[45deg]': activeAccordion==id }"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 6v12m6-6H6"></path></svg
-            >
-          </button>
-          <div
-            x-show="activeAccordion==id"
-            x-collapse=""
-            style="display: none;"
-          >
-            <div class="p-4 pt-2 text-zinc-500">
-              No. TabTab is a one-time purchase. There will be free future updates.
-            </div>
-          </div>
-        </div>
-
-        <div
-          x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
-        >
-          <button
-            @click="setActiveAccordion(id)"
-            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
-          >
-            <span>What is the refund policy?</span>
-            <svg
-              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
-              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
-              :class="{ '-rotate-[45deg]': activeAccordion==id }"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 6v12m6-6H6"></path></svg
-            >
-          </button>
-          <div x-show="activeAccordion==id" x-collapse="">
-            <div class="p-4 pt-2 text-zinc-500">
-              We stand by our app with a 7-day money-back guarantee. If you’re not satisfied for any reason, do reach out at <strong><em><span class="protected-email">hello@tabtabapp.net</span></em></strong> within 7 days of purchase and we’ll issue a full refund — no questions asked.
-            </div>
-          </div>
-        </div>
-
+        <FaqItem question="How much does TabTab cost?">
+          TabTab is {planPrice} after a {trialDays}-day free trial. The subscription renews automatically every {subscriptionPlan.interval} until you cancel.
+        </FaqItem>
+        <FaqItem question="Can I cancel anytime?">
+          Yes. Cancel before the trial ends and you won't be charged. After that, TabTab stays active until the end of the period you've paid for.
+        </FaqItem>
+        <FaqItem question="What about refunds?">
+          For billing questions, including refunds, email <strong><em><span class="protected-email">hello@tabtabapp.net</span></em></strong>. If a subscription payment is fully refunded, the subscription is cancelled and access ends.
+        </FaqItem>
         <div
           x-data="{ id: $id('accordion') }"
           :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
@@ -200,43 +112,9 @@ import { supportedAppGroups } from "../../data/supportedApps";
             </div>
           </div>
         </div>
-        <div
-          x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
-        >
-          <button
-            @click="setActiveAccordion(id)"
-            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
-          >
-            <span
-              >Can I share a license key on multiple devices?</span
-            >
-            <svg
-              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
-              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
-              :class="{ '-rotate-[45deg]': activeAccordion==id }"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 6v12m6-6H6"></path></svg
-            >
-          </button>
-          <div
-            x-show="activeAccordion==id"
-            x-collapse=""
-            style="display: none;"
-          >
-            <div class="p-4 pt-2 text-zinc-500">
-              Depending on your Pro plan, you can activate TabTab on either 1 device or up to 3 devices. For custom team plans, reach out at <strong><em><span class="protected-email">hello@tabtabapp.net</span></em></strong>.
-            </div>
-          </div>
-        </div>
+        <FaqItem question="How many Macs can I use?">
+          Each subscription covers {subscriptionPlan.devices} Mac. Lifetime licenses keep the number of devices they were sold with.
+        </FaqItem>
         <div
           x-data="{ id: $id('accordion') }"
           :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
@@ -319,35 +197,6 @@ import { supportedAppGroups } from "../../data/supportedApps";
                 <li>The macOS version</li>
                 <li>Your Mac's system language</li>
               </ul>
-            </div>
-          </div>
-        </div>
-        <div
-          x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
-        >
-          <button
-            @click="setActiveAccordion(id)"
-            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
-          >
-            <span>Are there any discounts for students?</span>
-            <svg
-              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
-              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
-              :class="{ '-rotate-[45deg]': activeAccordion==id }"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"></path>
-            </svg>
-          </button>
-          <div x-show="activeAccordion==id" x-collapse="" style="display: none;">
-            <div class="p-4 pt-2 text-zinc-500">
-              Yes! If you are a student, please email <strong><em><span class="protected-email">hello@tabtabapp.net</span></em></strong> using your edu email for a discount.
             </div>
           </div>
         </div>

@@ -2,6 +2,8 @@
 import { supportedAppGroups } from "../../data/supportedApps";
 import TabTabScreenshot from "../../components/TabTabScreenshot.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import DownloadCta from "../../components/global/DownloadCta.astro";
+import { subscriptionPlan } from "../../data/billing.mjs";
 
 const title = "How to Search All Open Tabs on Mac | TabTab";
 const description = "Learn how to search open browser, editor, Finder, and app tabs on a Mac by title, URL, window name, or app name from one keyboard-first switcher.";
@@ -95,7 +97,7 @@ const structuredData = {
             <li>Choose a keyboard shortcut in TabTab's settings. Use a combination that does not conflict with shortcuts you already use.</li>
             <li>Open a few tabs in a supported app. Invoke TabTab, type part of a tab's title or URL, select the result, and press Enter.</li>
           </ol>
-          <p class="mt-5">No browser extension is required. The free plan tracks your five most recent windows and tabs; <a class="text-accent-600 hover:text-accent-700" href="/pricing/">Pro removes that limit</a>.</p>
+          <p class="mt-5">No browser extension is required. <a class="text-accent-600 hover:text-accent-700" href="/pricing/">TabTab</a> starts with a {subscriptionPlan.trialDays}-day free trial.</p>
         </div>
       </section>
 
@@ -117,7 +119,6 @@ const structuredData = {
         <div class="mt-6 max-w-3xl text-lg leading-8 text-gray-600">
           <ul class="list-disc space-y-4 pl-6">
             <li>Check that the tab is still open and its app supports tab tracking. Window switching and individual tab tracking are different features.</li>
-            <li>On the free plan, switch to the missing window or tab first so it is among the five most recent items, then search again.</li>
             <li>Check that TabTab has the Accessibility access requested during setup, especially if windows are also missing or switching does not work.</li>
             <li>Try the latest TabTab release to get recent tab-tracking and switching fixes.</li>
           </ul>
@@ -146,18 +147,7 @@ const structuredData = {
         </div>
       </section>
 
-      <div class="mx-auto mt-16 max-w-4xl rounded-2xl bg-gray-950 p-8 text-center text-white md:p-10">
-        <div>
-          <h2 class="text-3xl font-medium tracking-tight font-display md:text-4xl">Supercharge navigation on your Mac</h2>
-          <p class="mx-auto mt-4 max-w-2xl text-lg leading-8 text-gray-300">Try TabTab free on Intel and Apple Silicon Macs running macOS 14 or later.</p>
-        </div>
-        <a
-          href="https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="mt-7 inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold text-black transition hover:bg-sky-100"
-        >Download TabTab</a>
-      </div>
+      <DownloadCta standalone={false} title="Supercharge navigation on your Mac" description={`Try TabTab free for ${subscriptionPlan.trialDays} days. Supports Intel and Apple Silicon Macs running macOS 14 or later.`} />
     </div>
   </article>
 </BaseLayout>

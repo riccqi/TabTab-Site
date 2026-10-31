@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { billing, subscriptionPlan, planPrice } from "../data/billing.mjs";
 
 interface Props {
   title?: string;
@@ -10,7 +11,7 @@ interface Props {
 }
 
 const defaultTitle = "TabTab: Search & Switch Windows and Tabs on Mac";
-const defaultDescription = "Search and switch between Mac windows and browser tabs by title, URL, or app name. Try TabTab for free, with a one-time purchase for Pro.";
+const defaultDescription = `Search and switch between Mac windows and browser tabs by title, URL, or app name. Try TabTab free for ${subscriptionPlan.trialDays} days, then ${planPrice}.`;
 const {
   title = defaultTitle,
   description = defaultDescription,
@@ -31,10 +32,10 @@ const softwareApplicationData = {
   applicationCategory: "UtilitiesApplication",
   softwareVersion: "2.1.2",
   downloadUrl: "https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg",
-  isAccessibleForFree: true,
+  isAccessibleForFree: false,
   offers: {
     "@type": "Offer",
-    price: "0",
+    price: subscriptionPlan.price,
     priceCurrency: "USD",
     availability: "https://schema.org/InStock",
     url: new URL("/pricing/", siteUrl).href,
@@ -73,6 +74,7 @@ const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? [
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width" />
 <meta name="author" content="Richard Qi" />
+{billing.noindex && <meta name="robots" content="noindex, nofollow" />}
 
 {Astro.url.pathname === "/" && <link rel="preload" as="image" href="/tabtab2.0-demo-poster.webp" fetchpriority="high" />}
 

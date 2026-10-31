@@ -1,0 +1,61 @@
+---
+// Subscription pricing (see src/data/billing.mjs).
+import CheckIcon from "../CheckIcon.astro";
+import { billing, subscriptionPlan, planDisplayAmount, planPrice } from "../../data/billing.mjs";
+
+const { trialDays, devices } = subscriptionPlan;
+---
+<section aria-labelledby="pricing-section" id="pricing">
+  <div class="lg:px-16 max-w-7xl md:px-12 mx-auto px-8 py-16 scroll-mt-20">
+    <div class="text-center max-w-3xl mx-auto">
+      <div class="flex justify-center mb-6">
+        <div class="bg-gradient-to-br from-sky-200 to-sky-400 rounded-2xl md:rounded-3xl p-5">
+          <img src="/symbols/seal.fill.svg" alt="" class="w-8 h-8 md:w-12 md:h-12 filter brightness-0 invert">
+        </div>
+      </div>
+      <h1 id="pricing-section" class="text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
+        Try TabTab free for {trialDays} days
+      </h1>
+      <p class="mt-4 text-lg text-gray-600">
+        Find and switch to any window or tab on your Mac. Upgrade your productivity.
+      </p>
+    </div>
+
+    <div class="mt-10 md:mt-12 flex justify-center">
+      <section
+        aria-label="TabTab subscription"
+        class="flex flex-col p-6 md:p-8 rounded-panel bg-gradient-to-br from-gray-800 to-gray-900 text-white w-full max-w-md"
+      >
+        <p class="order-first whitespace-nowrap font-display">
+          <span class="text-4xl tracking-tight text-white sm:text-5xl">{planDisplayAmount}</span><span class="ml-1 text-base text-gray-300 sm:text-lg">/{subscriptionPlan.interval}</span>
+        </p>
+        <p class="mt-2 text-sm text-gray-300">{trialDays}-day free trial</p>
+
+        <ul role="list" class="flex flex-col mt-6 text-sm text-gray-300 gap-y-3">
+          <li class="flex items-center"><CheckIcon /><span class="ml-4">Switch to any window or tab</span></li>
+          <li class="flex items-center"><CheckIcon /><span class="ml-4">Search by title, URL or app name</span></li>
+          <li class="flex items-center"><CheckIcon /><span class="ml-4">{devices} Mac per subscription</span></li>
+          <li class="flex items-center"><CheckIcon /><span class="ml-4">Cancel anytime</span></li>
+        </ul>
+
+        {billing.checkoutUrl ? (
+          <a
+            class="inline-flex items-center justify-center w-full px-6 py-3 h-12 mt-8 text-center font-medium text-black transition duration-200 ease-in-out bg-white border border-gray-200 rounded-button hover:bg-accent-600 hover:border-accent-600 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            href={billing.checkoutUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >Start {trialDays}-day free trial</a>
+        ) : (
+          <p
+            class="inline-flex items-center justify-center w-full px-6 py-3 min-h-12 mt-8 text-center font-medium text-gray-300 border border-gray-600 rounded-button"
+            role="status"
+          >Subscriptions are coming soon</p>
+        )}
+
+        <p class="mt-4 text-xs leading-5 text-gray-400">
+          Renews automatically at {planPrice} after {trialDays} days. Cancel before then to avoid charges.
+        </p>
+      </section>
+    </div>
+  </div>
+</section>
