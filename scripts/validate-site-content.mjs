@@ -81,9 +81,10 @@ if (!pricing) failures.push("/pricing/: missing");
 else {
   const text = visibleText(pricing);
   for (const required of ["$4.99", "7-day free trial", "Renews automatically at US$4.99/month", "Cancel before then to avoid charges",
-    "1 Mac per subscription", "Cancel anytime"]) {
+    "Up to 2 Macs per subscription", "Cancel anytime"]) {
     if (!text.includes(required)) failures.push(`/pricing/: missing "${required}"`);
   }
+  if (/\b(?:1|one) Mac(?: per subscription)?\b/i.test(text)) failures.push("/pricing/: stale one-Mac offer");
   if ((pricing.match(/<h1\b/gi) ?? []).length !== 1) failures.push("/pricing/: expected one h1");
   if (billing.checkoutUrl) {
     if (!pricing.includes(`href="${billing.checkoutUrl}"`)) failures.push("/pricing/: missing the checkout link");

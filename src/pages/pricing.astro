@@ -6,7 +6,7 @@ import SubscriptionPricing from "../components/landing/SubscriptionPricing.astro
 import { subscriptionPlan, planPrice } from "../data/billing.mjs";
 
 const title = `TabTab Pricing | ${subscriptionPlan.trialDays}-Day Free Trial, then ${planPrice}`;
-const description = `TabTab is ${planPrice} after a ${subscriptionPlan.trialDays}-day free trial, for ${subscriptionPlan.devices} Mac. Cancel anytime.`;
+const description = `TabTab is ${planPrice} after a ${subscriptionPlan.trialDays}-day free trial, for up to ${subscriptionPlan.devices} Macs. Cancel anytime.`;
 ---
 <BaseLayout
   title={title}

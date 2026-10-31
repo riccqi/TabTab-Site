@@ -1,6 +1,6 @@
 # TabTab subscription website release
 
-Offer: US$4.99/month after a 7-day free trial, auto-renewing, one Mac.
+Offer: US$4.99/month after a 7-day free trial, auto-renewing, up to 2 Macs.
 Existing Lemon Squeezy lifetime licenses retain their original device allowances.
 
 The GitHub Pages deploy workflow builds production mode with the verified persistent
@@ -35,3 +35,7 @@ Run npm run verify for the safe local preview. The CI and Pages workflows run th
 same command in production configuration and check pricing, renewal disclosures,
 provider links, routes and frontend-only content. Never publish a sandbox or a
 short-lived checkout-session URL.
+
+The two-Mac limit is configured on the existing Polar benefit. Public build165 already
+uses provider-enforced activation limits; only its embedded one-Mac offer text awaits
+a later app release. No new app build is part of this device-limit change.

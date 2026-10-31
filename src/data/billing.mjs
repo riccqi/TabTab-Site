@@ -15,7 +15,7 @@ export const subscriptionPlan = Object.freeze({
   currency: "USD",
   interval: "month",
   trialDays: 7,
-  devices: 1,
+  devices: 2,
 });
 
 export const downloadUrl = "https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg";
