@@ -1,6 +1,6 @@
 ---
 import { supportedAppGroups } from "../../data/supportedApps";
-import { subscriptionPlan, planPrice } from "../../data/billing.mjs";
+import { subscriptionPlan, planPrice, lifetimeManageUrl } from "../../data/billing.mjs";
 import FaqItem from "./FaqItem.astro";
 
 const { trialDays } = subscriptionPlan;
@@ -68,6 +68,9 @@ const { trialDays } = subscriptionPlan;
         </div>
         <FaqItem question="How much does TabTab cost?">
           TabTab is {planPrice} after a {trialDays}-day free trial. The subscription renews automatically every {subscriptionPlan.interval} until you cancel.
+        </FaqItem>
+        <FaqItem question="I bought a lifetime license. Does it still work?">
+          Yes. Lifetime licenses are grandfathered in and will keep working indefinitely. You don't need to switch to a subscription. If you've lost your license key, you can find it in your <a href={lifetimeManageUrl} target="_blank" rel="noopener noreferrer" class="font-semibold text-accent-500 hover:text-black">Lemon Squeezy orders</a>.
         </FaqItem>
         <FaqItem question="Can I cancel anytime?">
           Yes. Cancel before the trial ends and you won't be charged. After that, TabTab stays active until the end of the period you've paid for.
