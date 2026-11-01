@@ -1,5 +1,5 @@
 ---
-import { subscriptionPlan, downloadUrl } from "../../data/billing.mjs";
+import { downloadUrl } from "../../data/billing.mjs";
 
 interface Props {
   title?: string;
@@ -9,7 +9,7 @@ interface Props {
 }
 
 const {
-  title = `Try TabTab free for ${subscriptionPlan.trialDays} days`,
+  title = "Try TabTab free",
   description = "Download TabTab for Intel and Apple Silicon Macs running macOS 14 or later.",
   standalone = true,
 } = Astro.props;
