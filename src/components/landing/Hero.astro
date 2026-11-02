@@ -100,15 +100,6 @@
             <a href="/tabtab2.0-demo.mp4" class="absolute bottom-2 left-2 bg-black/80 text-white px-4 py-2 rounded-full text-sm">Watch demo</a>
           </noscript>
 
-          <button id="demo-play" type="button" hidden class="group absolute inset-0 flex items-center justify-center bg-black/10 text-white focus-visible:outline-none" aria-label="Play TabTab demo">
-            <span class="inline-flex items-center gap-2 rounded-full bg-black/80 px-6 py-3 font-medium group-focus-visible:ring-2 group-focus-visible:ring-white group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-black">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              Play demo
-            </span>
-          </button>
-
           <!-- Sound Toggle Button -->
           <button
             id="sound-toggle"
@@ -129,7 +120,6 @@
       const video = document.querySelector<HTMLVideoElement>('#demo-video');
       if (video) {
         const poster = document.getElementById('demo-poster');
-        const playButton = document.getElementById('demo-play');
         const soundToggle = document.getElementById('sound-toggle');
         const mutedIcon = document.getElementById('sound-icon-muted');
         const unmutedIcon = document.getElementById('sound-icon-unmuted');
@@ -145,27 +135,19 @@
           void video.play().catch(() => {});
         };
 
-        // Keep the poster visible while initial content loads. Mobile and reduced-
-        // motion visitors choose when to download and play the demo.
-        if (playButton) {
-          playButton.hidden = false;
-          playButton.addEventListener('click', play);
-        }
+        // Keep the poster visible while initial content loads, then autoplay.
         video.addEventListener('playing', () => {
           if (poster) poster.hidden = true;
-          if (playButton) playButton.hidden = true;
           if (soundToggle) soundToggle.hidden = false;
         });
-        video.addEventListener('error', () => {
-          if (playButton) playButton.hidden = false;
-        });
-        const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-        const autoplay = window.matchMedia('(min-width: 768px) and (prefers-reduced-motion: no-preference)').matches && !connection?.saveData;
         const observe = () => {
-          if (!('IntersectionObserver' in window)) return;
+          if (!('IntersectionObserver' in window)) {
+            play();
+            return;
+          }
           const observer = new IntersectionObserver(([entry]) => {
             if (!entry.isIntersecting) video.pause();
-            else if (autoplay || video.dataset.loaded) play();
+            else play();
           }, { threshold: 0.15 });
           observer.observe(video);
         };
