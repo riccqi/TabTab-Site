@@ -1,0 +1,109 @@
+---
+import { reviews, sourceIcons } from "../../data/reviews";
+
+// Two columns that drift vertically in opposite directions. Each column holds
+// its reviews twice, so translating by -50% lands back on the starting frame.
+const half = Math.ceil(reviews.length / 2);
+const columns = [reviews.slice(0, half), reviews.slice(half)];
+const copies = [0, 1];
+---
+
+<div class="review-wall grid grid-cols-2 gap-4" aria-label="User reviews" role="region">
+  {columns.map((column, columnIndex) => (
+    <div class="overflow-hidden">
+      <div class:list={["review-track", columnIndex === 1 && "review-track-reverse"]}>
+        {copies.map((copy) => (
+          <div class="flex flex-col gap-4 pb-4" aria-hidden={copy !== 0 ? "true" : undefined}>
+            {column.map((review) => (
+              <figure class="flex flex-col justify-between rounded-panel border border-gray-200 bg-gray-50 p-5">
+                <blockquote class="text-sm text-gray-600 font-normal">
+                  "{review.quote}"
+                </blockquote>
+                <figcaption class="mt-5 flex items-center justify-between gap-3">
+                  <div class="flex min-w-0 items-center gap-3">
+                    {review.avatar ? (
+                      <img
+                        src={review.avatar}
+                        alt=""
+                        width="32"
+                        height="32"
+                        loading="lazy"
+                        class="h-8 w-8 shrink-0 rounded-full bg-gray-200 object-cover"
+                      >
+                    ) : (
+                      <span
+                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-500"
+                        aria-hidden="true"
+                      >
+                        {review.name.charAt(0)}
+                      </span>
+                    )}
+                    <p class="truncate text-sm text-gray-500 font-display font-semibold">
+                      {review.href ? (
+                        <a
+                          href={review.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          tabindex={copy !== 0 ? -1 : undefined}
+                          class="hover:text-accent-500"
+                        >
+                          {review.name}
+                        </a>
+                      ) : (
+                        review.name
+                      )}
+                    </p>
+                  </div>
+                  {review.source && (
+                    <img
+                      src={sourceIcons[review.source].src}
+                      alt={sourceIcons[review.source].label}
+                      title={sourceIcons[review.source].label}
+                      class="w-4 h-4 opacity-50"
+                    >
+                  )}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .review-wall {
+    height: 100%;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 90%, transparent);
+  }
+
+  .review-track {
+    animation: review-drift 70s linear infinite;
+  }
+
+  .review-track-reverse {
+    animation-direction: reverse;
+  }
+
+  .review-wall:hover .review-track,
+  .review-wall:focus-within .review-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes review-drift {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .review-track {
+      animation: none;
+    }
+
+    .review-wall > div {
+      overflow-y: auto;
+    }
+  }
+</style>
