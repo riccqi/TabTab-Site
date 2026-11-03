@@ -80,7 +80,7 @@ const pricing = pages.get("/pricing/");
 if (!pricing) failures.push("/pricing/: missing");
 else {
   const text = visibleText(pricing);
-  for (const required of ["$4.99", "7-day free trial", "Renews automatically at US$4.99/month", "Cancel before then to avoid charges",
+  for (const required of ["Try 7 days free", "$4.99", "USD per month after trial",
     "Up to 2 Macs per subscription", "Cancel anytime"]) {
     if (!text.includes(required)) failures.push(`/pricing/: missing "${required}"`);
   }

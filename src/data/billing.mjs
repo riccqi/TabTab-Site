@@ -93,5 +93,7 @@ export const billing = billingConfig();
 
 /** The price with its currency, so buyers outside the US aren't misled: "US$4.99". */
 export const planAmount = `US$${subscriptionPlan.price}`;
+/** The headline price on the pricing card: "$4.99". The line under it names the currency. */
+export const planDisplayAmount = `$${subscriptionPlan.price}`;
 /** "US$4.99/month" */
 export const planPrice = `${planAmount}/${subscriptionPlan.interval}`;

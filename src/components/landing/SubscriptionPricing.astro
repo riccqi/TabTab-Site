@@ -2,7 +2,7 @@
 // Subscription pricing (see src/data/billing.mjs).
 import CheckIcon from "../CheckIcon.astro";
 import ReviewWall from "../global/ReviewWall.astro";
-import { billing, subscriptionPlan, planPrice } from "../../data/billing.mjs";
+import { billing, subscriptionPlan, planDisplayAmount } from "../../data/billing.mjs";
 
 const { trialDays, devices } = subscriptionPlan;
 ---
@@ -27,12 +27,13 @@ const { trialDays, devices } = subscriptionPlan;
         <h1 id="pricing-section" class="mt-6 text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
           Try {trialDays} days free
         </h1>
-        <p class="mt-3 text-lg text-gray-600">
+        <p class="mt-3 text-xl text-gray-700">
           Find and switch to any window or tab on your Mac.
         </p>
 
-        <p class="mt-6 text-sm leading-6 text-gray-500">
-          Renews automatically at {planPrice} after your {trialDays}-day free trial. Cancel before then to avoid charges.
+        <p class="mt-8 text-3xl font-semibold tracking-tight text-black font-display">{planDisplayAmount}</p>
+        <p class="mt-2 text-sm leading-6 text-gray-500">
+          {subscriptionPlan.currency} per {subscriptionPlan.interval} after trial
         </p>
 
         {billing.checkoutUrl ? (
