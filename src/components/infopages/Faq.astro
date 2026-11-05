@@ -1,6 +1,6 @@
 ---
 import { supportedAppGroups } from "../../data/supportedApps";
-import { subscriptionPlan, lifetimeManageUrl } from "../../data/billing.mjs";
+import { macsPerPlan, lifetimeManageUrl } from "../../data/billing.mjs";
 import FaqItem from "./FaqItem.astro";
 ---
 <section aria-labelledby="faq-section" id="faq">  
@@ -64,7 +64,7 @@ import FaqItem from "./FaqItem.astro";
             </div>
           </div>
         </div>
-        <FaqItem question="I bought a lifetime license. Does it still work?">
+        <FaqItem question="I already have a lifetime license. Does it still work?">
           Yes. Lifetime licenses are grandfathered in and will keep working indefinitely. You don't need to switch to a subscription. If you've lost your license key, you can find it in your <a href={lifetimeManageUrl} target="_blank" rel="noopener noreferrer" class="font-semibold text-accent-500 hover:text-black">Lemon Squeezy orders</a>.
         </FaqItem>
         <FaqItem question="What about refunds?">
@@ -108,7 +108,7 @@ import FaqItem from "./FaqItem.astro";
           </div>
         </div>
         <FaqItem question="How many Macs can I use?">
-          Each subscription covers up to {subscriptionPlan.devices} Macs. Lifetime licenses keep the number of devices they were sold with.
+          Every paid plan covers up to {macsPerPlan} Macs. Lifetime licenses bought before these plans keep the number of devices they were sold with.
         </FaqItem>
         <div
           x-data="{ id: $id('accordion') }"

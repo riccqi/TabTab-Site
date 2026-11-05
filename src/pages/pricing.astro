@@ -1,13 +1,13 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import EmailSignup from "../components/landing/EmailSignup.astro";
-import Faq from "../components/infopages/Faq.astro";
+import PricingFaq from "../components/infopages/PricingFaq.astro";
 import Testimonial from "../components/global/Testimonial.astro";
 import SubscriptionPricing from "../components/landing/SubscriptionPricing.astro";
-import { subscriptionPlan, planPrice } from "../data/billing.mjs";
+import { macsPerPlan, planPriceSummary, trialDays } from "../data/billing.mjs";
 
-const title = `TabTab Pricing | ${subscriptionPlan.trialDays}-Day Free Trial, then ${planPrice}`;
-const description = `TabTab is ${planPrice} after a ${subscriptionPlan.trialDays}-day free trial, for up to ${subscriptionPlan.devices} Macs. Cancel anytime.`;
+const title = "TabTab Pricing | Monthly, Annual and Lifetime Plans";
+const description = `TabTab is ${planPriceSummary}, for up to ${macsPerPlan} Macs. Try it free for ${trialDays} days first, with no account or card.`;
 ---
 <BaseLayout
   title={title}
@@ -19,6 +19,6 @@ const description = `TabTab is ${planPrice} after a ${subscriptionPlan.trialDays
       <Testimonial />
     </div>
     <EmailSignup />
-    <Faq />
+    <PricingFaq />
   </div>
 </BaseLayout>

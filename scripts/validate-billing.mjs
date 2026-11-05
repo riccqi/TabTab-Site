@@ -1,6 +1,14 @@
 // Unit checks for the billing rules in src/data/billing.mjs.
 import assert from "node:assert/strict";
-import { billingConfig, checkoutUrl, portalUrl, rolloutMode } from "../src/data/billing.mjs";
+import { annualPerMonth, annualSavingPercent, billingConfig, checkoutUrl, defaultPlanId, macsPerPlan, plans, portalUrl, rolloutMode, trialDays } from "../src/data/billing.mjs";
+
+const link = id => `https://api.polar.sh/v1/checkout-links/polar_cl_${id}/redirect`;
+const allLinks = {
+  TABTAB_POLAR_CHECKOUT_MONTHLY_URL: link("Monthly123"),
+  TABTAB_POLAR_CHECKOUT_ANNUAL_URL: link("Annual123"),
+  TABTAB_POLAR_CHECKOUT_LIFETIME_URL: link("Lifetime123"),
+};
+const RETIRED = link("xUfKGtMMTdza7ZCvzGAjePjlTzEtGgVEbBeBK2S3v8Q");
 
 const checks = [
   ["rollout defaults to preview and rejects unknown modes", () => {
@@ -11,17 +19,43 @@ const checks = [
     assert.throws(() => rolloutMode("true"));
     assert.throws(() => rolloutMode("ON"));
   }],
-  ["preview without a checkout link shows the coming-soon state and noindex", () => {
+  ["the approved offer: monthly, annual by default, lifetime, 7-day trial, 3 Macs", () => {
+    assert.deepEqual(plans.map(plan => [plan.id, plan.price, plan.unit]), [
+      ["monthly", "4.99", "/month"],
+      ["annual", "34.99", "/year"],
+      ["lifetime", "99.99", "once"],
+    ]);
+    assert.equal(defaultPlanId, "annual");
+    assert.equal(annualPerMonth, "2.92");
+    assert.equal(annualSavingPercent, 42);
+    assert.equal(trialDays, 7);
+    assert.equal(macsPerPlan, 3);
+  }],
+  ["preview without checkout links shows the coming-soon state and noindex", () => {
     const config = billingConfig({});
     assert.equal(config.mode, "preview");
-    assert.equal(config.checkoutUrl, null);
+    assert.deepEqual({ ...config.checkout }, { monthly: null, annual: null, lifetime: null });
     assert.equal(config.noindex, true);
   }],
-  ["on requires a production checkout link", () => {
+  ["on requires all three new production checkout links", () => {
     assert.throws(() => billingConfig({ TABTAB_SUBSCRIPTION_ROLLOUT: "on" }));
-    const config = billingConfig({ TABTAB_SUBSCRIPTION_ROLLOUT: "on", TABTAB_POLAR_CHECKOUT_URL: "https://api.polar.sh/v1/checkout-links/polar_cl_Example123/redirect" });
-    assert.equal(config.checkoutUrl, "https://api.polar.sh/v1/checkout-links/polar_cl_Example123/redirect");
+    for (const missing of Object.keys(allLinks)) {
+      assert.throws(() => billingConfig({ TABTAB_SUBSCRIPTION_ROLLOUT: "on", ...allLinks, [missing]: "" }), new RegExp(missing));
+    }
+    const config = billingConfig({ TABTAB_SUBSCRIPTION_ROLLOUT: "on", ...allLinks });
+    assert.equal(config.checkout.annual, link("Annual123"));
     assert.equal(config.noindex, false);
+  }],
+  ["the retired checkout variable alone cannot launch the site", () => {
+    assert.throws(() => billingConfig({ TABTAB_SUBSCRIPTION_ROLLOUT: "on", TABTAB_POLAR_CHECKOUT_URL: link("Example123") }));
+  }],
+  ["the retired Polar trial checkout is refused for every plan", () => {
+    for (const name of Object.keys(allLinks)) {
+      assert.throws(() => billingConfig({ ...allLinks, [name]: RETIRED }), /retired/);
+    }
+  }],
+  ["each plan needs its own checkout link", () => {
+    assert.throws(() => billingConfig({ ...allLinks, TABTAB_POLAR_CHECKOUT_ANNUAL_URL: allLinks.TABTAB_POLAR_CHECKOUT_MONTHLY_URL }), /own checkout/);
   }],
   ["checkout links must be persistent production Polar checkout links", () => {
     assert.equal(checkoutUrl(undefined), null);

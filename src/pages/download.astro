@@ -1,0 +1,65 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { downloadUrl, trialDays } from "../data/billing.mjs";
+
+const title = `Download TabTab for Mac | ${trialDays}-Day Free Trial`;
+const description = `Download TabTab and get ${trialDays} days of full access. No account or card required, and no automatic charge when the trial ends. Requires macOS 14 or later.`;
+
+const steps = [
+  {
+    heading: "Seven days of full access",
+    body: "Every TabTab feature is unlocked from the moment you open the app.",
+  },
+  {
+    heading: "No account or card",
+    body: "Just download and open TabTab. There is nothing to sign up for.",
+  },
+  {
+    heading: "No automatic charge",
+    body: "When the trial ends, you won't be billed. Buying a plan is up to you.",
+  },
+];
+---
+<BaseLayout title={title} description={description}>
+  <section aria-labelledby="download-heading" class="px-8 pt-16 pb-12 md:px-12 md:pt-24 text-center">
+    <div class="mx-auto max-w-2xl">
+      <h1 id="download-heading" class="text-4xl tracking-tight font-medium text-black md:text-6xl font-display">
+        Try TabTab free
+      </h1>
+      <p class="mt-4 text-xl text-gray-700">
+        Find and switch to any window or tab on your Mac.
+      </p>
+      <a
+        class="mt-8 inline-flex items-center justify-center h-14 px-8 font-bold md:text-lg text-white whitespace-nowrap bg-black border-2 border-black rounded-button duration-200 hover:bg-transparent hover:text-black focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+        href={downloadUrl}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6 mr-2" fill="currentColor" aria-hidden="true">
+          <path d="M19.37 7.648c-.114.088-2.11 1.213-2.11 3.715 0 2.894 2.54 3.918 2.616 3.944-.011.062-.403 1.402-1.34 2.767-.834 1.201-1.706 2.4-3.032 2.4s-1.667-.77-3.198-.77c-1.492 0-2.022.796-3.235.796-1.214 0-2.06-1.112-3.033-2.477C4.911 16.42 4 13.93 4 11.566c0-3.791 2.465-5.802 4.891-5.802 1.29 0 2.364.847 3.173.847.77 0 1.972-.897 3.438-.897.556 0 2.553.05 3.867 1.934Zm-4.564-3.54c.607-.719 1.036-1.718 1.036-2.716 0-.138-.012-.279-.037-.392-.987.037-2.161.657-2.87 1.478-.555.632-1.074 1.63-1.074 2.643 0 .152.026.304.037.353.063.011.164.025.266.025.885 0 1.998-.593 2.642-1.39Z" />
+        </svg>
+        Download for Mac
+      </a>
+      <p class="mt-4 text-sm text-gray-500">
+        Requires macOS 14 or later.
+      </p>
+    </div>
+  </section>
+
+  <section aria-labelledby="trial-heading" class="px-8 pb-24 md:px-12">
+    <div class="mx-auto max-w-5xl">
+      <h2 id="trial-heading" class="text-center text-3xl font-medium tracking-tight text-black font-display md:text-4xl">
+        How the free trial works
+      </h2>
+      <ul role="list" class="mt-10 grid gap-6 md:grid-cols-3">
+        {steps.map(step => (
+          <li class="rounded-panel border border-gray-200 bg-white p-6 md:p-8">
+            <h3 class="text-lg font-semibold text-black font-display">{step.heading}</h3>
+            <p class="mt-2 text-gray-600">{step.body}</p>
+          </li>
+        ))}
+      </ul>
+      <p class="mt-10 text-center text-gray-600">
+        Ready to buy instead? <a href="/pricing/" class="font-semibold text-accent-500 hover:text-black">See plans and pricing</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
