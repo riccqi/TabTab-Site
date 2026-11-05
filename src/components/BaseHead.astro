@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-import { billing, subscriptionPlan, planPrice } from "../data/billing.mjs";
+import { billing, currency, downloadUrl, plans, planPriceSummary, trialDays } from "../data/billing.mjs";
 
 interface Props {
   title?: string;
@@ -11,7 +11,7 @@ interface Props {
 }
 
 const defaultTitle = "TabTab: Search & Switch Windows and Tabs on Mac";
-const defaultDescription = `Search and switch between Mac windows and browser tabs by title, URL, or app name. Try TabTab free for ${subscriptionPlan.trialDays} days, then ${planPrice}.`;
+const defaultDescription = `Search and switch between Mac windows and browser tabs by title, URL, or app name. Try TabTab free for ${trialDays} days, then choose from ${planPriceSummary}.`;
 const {
   title = defaultTitle,
   description = defaultDescription,
@@ -31,15 +31,16 @@ const softwareApplicationData = {
   operatingSystem: "macOS 14.0 or later",
   applicationCategory: "UtilitiesApplication",
   softwareVersion: "2.1.2",
-  downloadUrl: "https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg",
+  downloadUrl,
   isAccessibleForFree: false,
-  offers: {
+  offers: plans.map(plan => ({
     "@type": "Offer",
-    price: subscriptionPlan.price,
-    priceCurrency: "USD",
+    name: plan.label,
+    price: plan.price,
+    priceCurrency: currency,
     availability: "https://schema.org/InStock",
     url: new URL("/pricing/", siteUrl).href,
-  },
+  })),
   featureList: [
     "Switch between Mac windows",
     "Search browser and app tabs by title or URL",
@@ -76,6 +77,7 @@ const resolvedStructuredData = structuredData ?? (Astro.url.pathname === "/" ? [
 <meta name="author" content="Richard Qi" />
 {billing.noindex && <meta name="robots" content="noindex, nofollow" />}
 
+<link rel="preload" href="/fonts/InterVariable-latin.woff2" as="font" type="font/woff2" crossorigin />
 {Astro.url.pathname === "/" && <link rel="preload" as="image" href="/tabtab2.0-demo-poster.webp" fetchpriority="high" />}
 
 <!-- Primary Meta Tags -->

@@ -1,0 +1,48 @@
+---
+import FaqItem from "./FaqItem.astro";
+import { billing, lifetimeManageUrl, macsPerPlan, trialDays } from "../../data/billing.mjs";
+
+const linkClass = "font-semibold text-accent-500 hover:text-black";
+---
+<section aria-labelledby="pricing-faq-section" id="faq">
+  <div class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-24 scroll-mt-20">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12">
+      <div class="text-center lg:text-left">
+        <h2 id="pricing-faq-section" class="text-3xl font-medium tracking-tight sm:text-4xl">
+          Frequently asked questions
+        </h2>
+      </div>
+      <div
+        x-data="{
+  activeAccordion: '',
+  setActiveAccordion(id) {
+  this.activeAccordion = (this.activeAccordion == id) ? '' : id
+  }
+  }"
+        class="relative w-full mx-auto font-normal lg:col-span-2"
+      >
+        <FaqItem question="What happens when the free trial ends?">
+          You aren't charged. The {trialDays}-day trial runs on your Mac with no account or card, so there is nothing to bill. To keep using TabTab afterwards, buy any plan.
+        </FaqItem>
+        <FaqItem question="How does billing work?">
+          Monthly and Annual plans renew automatically until you cancel. Cancelling stops future renewals, and TabTab stays available until the end of the paid period. Lifetime is a single payment. For billing questions, including refunds, email <a href="mailto:hello@tabtabapp.net" class={linkClass}>hello@tabtabapp.net</a>.
+        </FaqItem>
+        <FaqItem question="What does Lifetime include?">
+          One payment covers TabTab on up to {macsPerPlan} Macs, including future updates. There is nothing to renew.
+        </FaqItem>
+        <FaqItem question="How many Macs does a plan cover?">
+          Every paid plan covers up to {macsPerPlan} Macs.
+        </FaqItem>
+        <FaqItem question="I already have a license or a trial. Does anything change?">
+          No. If you started a trial through Polar, it keeps its original end date, license and billing schedule, so there's no need to start over or buy again. Existing lifetime licenses keep working on the number of Macs they came with.
+        </FaqItem>
+        <FaqItem question="How do I manage or cancel my subscription?">
+          {billing.portalUrl
+            ? <Fragment>Use the <a href={billing.portalUrl} target="_blank" rel="noopener noreferrer" class={linkClass}>customer portal</a> to cancel or update your subscription.</Fragment>
+            : <Fragment>Email <a href="mailto:hello@tabtabapp.net" class={linkClass}>hello@tabtabapp.net</a> to cancel or update your subscription.</Fragment>}
+          {" "}Older lifetime licenses can be found in your <a href={lifetimeManageUrl} target="_blank" rel="noopener noreferrer" class={linkClass}>Lemon Squeezy orders</a>.
+        </FaqItem>
+      </div>
+    </div>
+  </div>
+</section>

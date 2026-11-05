@@ -1,5 +1,5 @@
 ---
-import { planPrice, subscriptionPlan } from "../../data/billing.mjs";
+import { macsPerPlan, planPriceSummary, trialDays } from "../../data/billing.mjs";
 ---
 <section>
   <div
@@ -18,9 +18,9 @@ import { planPrice, subscriptionPlan } from "../../data/billing.mjs";
     <div>
       <div
         class="mx-auto max-w-[40rem] prose-base prose text-gray-500 prose-h3:text-black prose-a:font-semibold prose-a:text-accent-300 hover:prose-a:text-black">
-        <p>These Terms and Conditions ("Terms") apply to the TabTab application (hereinafter referred to as the "Application") for macOS devices, created by QI ZHI (hereinafter referred to as the "Service Provider"). New customers use TabTab through a paid subscription.</p>
-        <h3>Subscriptions</h3>
-        <p>TabTab is {planPrice} after a {subscriptionPlan.trialDays}-day free trial. The subscription renews automatically every {subscriptionPlan.interval} until you cancel. Each subscription covers up to {subscriptionPlan.devices} Macs. Cancelling stops future renewals; TabTab stays available until the end of the trial or paid period. If a subscription payment is fully refunded, the subscription is also cancelled immediately, which ends access. Existing lifetime licenses keep working on the number of Macs they came with.</p>
+        <p>These Terms and Conditions ("Terms") apply to the TabTab application (hereinafter referred to as the "Application") for macOS devices, created by QI ZHI (hereinafter referred to as the "Service Provider"). New customers can start with a free trial and then buy a paid plan.</p>
+        <h3>Free trial and paid plans</h3>
+        <p>The downloaded app includes a {trialDays}-day free trial that needs no account or card and does not charge you when it ends. TabTab is then {planPriceSummary}; the one-time Lifetime plan includes future updates. Each paid plan covers up to {macsPerPlan} Macs. A monthly or annual subscription renews automatically until you cancel. Cancelling stops future renewals; TabTab stays available until the end of the paid period. If a subscription payment is fully refunded, the subscription is also cancelled immediately, which ends access. Trials started through Polar before these plans keep their original end date, licenses and billing schedule; if cancelled, TabTab stays available until the end of that trial. Existing lifetime licenses keep working on the number of Macs they came with.</p>
         <p>
           By downloading or using the Application, you are agreeing to be bound by these Terms. You are advised to read these Terms carefully before using the Application. Unauthorized reproduction, modification of the Application, any part of the Application, or the Service Provider's trademarks is strictly prohibited. You shall not attempt to extract the source code of the Application, translate the Application into other languages, or create derivative versions. All trademarks, copyrights, database rights, and other intellectual property rights related to the Application remain the exclusive property of the Service Provider.
         </p>

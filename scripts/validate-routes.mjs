@@ -2,6 +2,7 @@ import { access, readFile } from "node:fs/promises";
 
 const routes = [
   ["/", "dist/index.html"],
+  ["/download/", "dist/download/index.html"],
   ["/compare/alttab/", "dist/compare/alttab/index.html"],
   ["/guides/search-open-tabs-on-mac/", "dist/guides/search-open-tabs-on-mac/index.html"],
   ["/press/", "dist/press/index.html"],
