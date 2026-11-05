@@ -81,7 +81,7 @@ if (!pricing) failures.push("/pricing/: missing");
 else {
   const text = visibleText(pricing);
   for (const required of ["Monthly", "Annual", "Lifetime", "$4.99", "/month", "$34.99", "/year", "About $2.92/month", "billed annually",
-    "Saves about 42% vs monthly", "$99.99", "once", "Includes future updates", "Try for Free", "up to 2 Macs", "Renews until you cancel"]) {
+    "Saves about 42% vs monthly", "$99.99", "once", "Includes future updates", "Try for Free", "up to 3 Macs", "Renews until you cancel"]) {
     if (!text.includes(required)) failures.push(`/pricing/: missing "${required}"`);
   }
   // Claims and options established for Paste, not for TabTab, and the old Polar trial offer.

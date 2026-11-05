@@ -19,7 +19,7 @@ const checks = [
     assert.throws(() => rolloutMode("true"));
     assert.throws(() => rolloutMode("ON"));
   }],
-  ["the approved offer: monthly, annual by default, lifetime, 7-day trial, 2 Macs", () => {
+  ["the approved offer: monthly, annual by default, lifetime, 7-day trial, 3 Macs", () => {
     assert.deepEqual(plans.map(plan => [plan.id, plan.price, plan.unit]), [
       ["monthly", "4.99", "/month"],
       ["annual", "34.99", "/year"],
@@ -29,7 +29,7 @@ const checks = [
     assert.equal(annualPerMonth, "2.92");
     assert.equal(annualSavingPercent, 42);
     assert.equal(trialDays, 7);
-    assert.equal(macsPerPlan, 2);
+    assert.equal(macsPerPlan, 3);
   }],
   ["preview without checkout links shows the coming-soon state and noindex", () => {
     const config = billingConfig({});

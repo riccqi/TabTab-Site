@@ -3,7 +3,7 @@
 Offer for new customers: download first with a 7-day local trial (no account or card,
 no automatic charge when it ends), or buy directly. US$4.99/month, US$34.99/year (Annual,
 selected by default) or US$99.99 once (Lifetime, including future updates). Every paid
-plan covers 2 Macs.
+plan covers 3 Macs.
 
 Existing customers keep what they have. Polar trial customers retain their original trial
 expiry, issued licenses and billing schedule, and are not moved onto a local trial or asked
@@ -22,7 +22,7 @@ Do not merge this release into main until all of these are done. Pushing to main
    unchanged.
 2. In that released app, verify a fresh local trial, an existing Polar trial (original
    expiry kept, no fresh local trial), a Polar subscription key, and a Lemon Squeezy key.
-3. Create the three new production Polar checkouts with no Polar trial and a 2-Mac license
+3. Create the three new production Polar checkouts with no Polar trial and a 3-Mac license
    benefit, and verify each key unlocks the released app.
 4. Set the repository variables TABTAB_POLAR_CHECKOUT_MONTHLY_URL,
    TABTAB_POLAR_CHECKOUT_ANNUAL_URL and TABTAB_POLAR_CHECKOUT_LIFETIME_URL. The previous

@@ -13,7 +13,7 @@ export const ROLLOUT_MODES = ["preview", "on"];
 
 export const trialDays = 7;
 /** How many Macs every paid plan covers. */
-export const macsPerPlan = 2;
+export const macsPerPlan = 3;
 export const currency = "USD";
 
 const MONTHLY_CENTS = 499;
