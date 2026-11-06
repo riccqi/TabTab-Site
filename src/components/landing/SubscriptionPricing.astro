@@ -2,7 +2,7 @@
 // Monthly, Annual and Lifetime plans (see src/data/billing.mjs).
 import CheckIcon from "../CheckIcon.astro";
 import ReviewWall from "../global/ReviewWall.astro";
-import { annualSavingPercent, billing, defaultPlanId, macsPerPlan, plans, trialDays } from "../../data/billing.mjs";
+import { annualSavingPercent, billing, defaultPlanId, macsPerPlan, plans } from "../../data/billing.mjs";
 
 const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 text-center font-medium transition duration-200 ease-in-out rounded-button focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black";
 ---
@@ -91,7 +91,7 @@ const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 tex
           >Try for Free</a>
         </div>
         <p class="mt-3 text-sm text-gray-500">
-          Trying first is optional: {trialDays} days free, no account or card.
+          Start a trial with no card or account required.
         </p>
 
         <hr class="mt-8 border-gray-200">
