@@ -81,7 +81,7 @@ if (!pricing) failures.push("/pricing/: missing");
 else {
   const text = visibleText(pricing);
   for (const required of ["Monthly", "Annual", "Lifetime", "$4.99", "/month", "$34.99", "/year", "About $2.92/month", "billed annually",
-    "Saves about 42% vs monthly", "$99.99", "once", "Includes future updates", "Try for Free", "up to 3 Macs", "Renews until you cancel"]) {
+    "Saves about 42% vs monthly", "$89.99", "once", "Includes future updates", "Try for Free", "up to 3 Macs", "Renews until you cancel"]) {
     if (!text.includes(required)) failures.push(`/pricing/: missing "${required}"`);
   }
   // Claims and options established for Paste, not for TabTab, and the old Polar trial offer.
@@ -139,7 +139,7 @@ for (const required of ["license key", "activation identifier", "device label", 
 }
 if (/Freemium|does not collect (?:any )?user-identifiable|does not store personally identifiable|only collects anonymized usage/i.test(privacy)) failures.push("/privacy/: still says Freemium or no identifiable data");
 const terms = visibleText(pages.get("/terms/") ?? "");
-for (const required of ["US$4.99/month", "US$34.99/year", "US$99.99 once", "renews automatically", "original end date", "Cancelling stops future renewals", "cancelled immediately", "lifetime licenses keep working"]) {
+for (const required of ["US$4.99/month", "US$34.99/year", "US$89.99 once", "renews automatically", "original end date", "Cancelling stops future renewals", "cancelled immediately", "lifetime licenses keep working"]) {
   if (!terms.includes(required)) failures.push(`/terms/: missing "${required}"`);
 }
 if (/Freemium|does not collect or store any personal data/.test(terms)) failures.push("/terms/: stale service or data disclosure");
