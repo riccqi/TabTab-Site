@@ -54,7 +54,7 @@ export const supportedAppGroups = [
   { category: "utilities", label: "Utilities" },
 ].map(({ category, label }) => ({
   label,
-  names: supportedApps
+  names: [...supportedApps
     .filter((app) => app.category === category)
-    .flatMap((app) => [app.name, ...(app.variants ?? [])]),
+    .flatMap((app) => [app.name, ...(app.variants ?? [])]), ...(category === "browsers" ? ["Rex Beta"] : [])],
 }));
