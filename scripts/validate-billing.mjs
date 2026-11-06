@@ -23,7 +23,7 @@ const checks = [
     assert.deepEqual(plans.map(plan => [plan.id, plan.price, plan.unit]), [
       ["monthly", "4.99", "/month"],
       ["annual", "34.99", "/year"],
-      ["lifetime", "99.99", "once"],
+      ["lifetime", "89.99", "once"],
     ]);
     assert.equal(defaultPlanId, "annual");
     assert.equal(annualPerMonth, "2.92");

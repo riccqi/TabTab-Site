@@ -18,7 +18,7 @@ export const currency = "USD";
 
 const MONTHLY_CENTS = 499;
 const ANNUAL_CENTS = 3499;
-const LIFETIME_CENTS = 9999;
+const LIFETIME_CENTS = 8999;
 
 const dollars = cents => (cents / 100).toFixed(2);
 
@@ -57,8 +57,8 @@ export const plans = Object.freeze([
 
 export const defaultPlanId = "annual";
 
-/** "US$4.99/month, US$34.99/year or US$99.99 once" */
-export const planPriceSummary = "US$4.99/month, US$34.99/year or US$99.99 once";
+/** "US$4.99/month, US$34.99/year or US$89.99 once" */
+export const planPriceSummary = "US$4.99/month, US$34.99/year or US$89.99 once";
 
 export const downloadUrl = "https://github.com/riccqi/TabTabApp/releases/download/prod/tabtab-latest.dmg";
 

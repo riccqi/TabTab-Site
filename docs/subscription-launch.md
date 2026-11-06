@@ -2,7 +2,7 @@
 
 Offer for new customers: download first with a 7-day local trial (no account or card,
 no automatic charge when it ends), or buy directly. US$4.99/month, US$34.99/year (Annual,
-selected by default) or US$99.99 once (Lifetime, including future updates). Every paid
+selected by default) or US$89.99 once (Lifetime, including future updates). Every paid
 plan covers 3 Macs.
 
 Existing customers keep what they have. Polar trial customers retain their original trial
