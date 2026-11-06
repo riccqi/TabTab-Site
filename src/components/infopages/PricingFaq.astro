@@ -22,7 +22,7 @@ const linkClass = "font-semibold text-accent-500 hover:text-black";
         class="relative w-full mx-auto font-normal lg:col-span-2"
       >
         <FaqItem question="What happens when the free trial ends?">
-          You aren't charged. The {trialDays}-day trial runs on your Mac with no account or card, so there is nothing to bill. To keep using TabTab afterwards, buy any plan.
+          The {trialDays}-day trial started in the app ends without a charge. To keep using TabTab, buy a plan and activate your license key. If you previously started a card-based trial through Polar, it keeps its original billing schedule; cancel in the customer portal before it ends to avoid a charge.
         </FaqItem>
         <FaqItem question="How does billing work?">
           Monthly and Annual plans renew automatically until you cancel. Cancelling stops future renewals, and TabTab stays available until the end of the paid period. Lifetime is a single payment. For billing questions, including refunds, email <a href="mailto:hello@tabtabapp.net" class={linkClass}>hello@tabtabapp.net</a>.
@@ -31,16 +31,16 @@ const linkClass = "font-semibold text-accent-500 hover:text-black";
           One payment covers TabTab on up to {macsPerPlan} Macs, including future updates. There is nothing to renew.
         </FaqItem>
         <FaqItem question="How many Macs does a plan cover?">
-          Every paid plan covers up to {macsPerPlan} Macs.
+          Current plans and existing Polar licenses cover up to {macsPerPlan} Macs. Older Lemon Squeezy lifetime licenses keep their original device allowance.
         </FaqItem>
         <FaqItem question="I already have a license or a trial. Does anything change?">
-          No. If you started a trial through Polar, it keeps its original end date, license and billing schedule, so there's no need to start over or buy again. Existing lifetime licenses keep working on the number of Macs they came with.
+          You don't need to buy again. Existing Polar licenses now cover up to {macsPerPlan} Macs. A trial started through Polar keeps its original end date and billing schedule. Older Lemon Squeezy lifetime licenses keep their original device allowance.
         </FaqItem>
-        <FaqItem question="How do I manage or cancel my subscription?">
+        <FaqItem question="Where do I find my key or manage my purchase?">
           {billing.portalUrl
-            ? <Fragment>Use the <a href={billing.portalUrl} target="_blank" rel="noopener noreferrer" class={linkClass}>customer portal</a> to cancel or update your subscription.</Fragment>
-            : <Fragment>Email <a href="mailto:hello@tabtabapp.net" class={linkClass}>hello@tabtabapp.net</a> to cancel or update your subscription.</Fragment>}
-          {" "}Older lifetime licenses can be found in your <a href={lifetimeManageUrl} target="_blank" rel="noopener noreferrer" class={linkClass}>Lemon Squeezy orders</a>.
+            ? <Fragment>Use the <a href={billing.portalUrl} target="_blank" rel="noopener noreferrer" class={linkClass}>customer portal</a> to find your license key, manage device activations, or cancel a subscription.</Fragment>
+            : <Fragment>Email <a href="mailto:hello@tabtabapp.net" class={linkClass}>hello@tabtabapp.net</a> to find your license key, manage device activations, or cancel a subscription.</Fragment>}
+          {" "}Activate your key in Settings → License in TabTab. Older lifetime licenses can be found in your <a href={lifetimeManageUrl} target="_blank" rel="noopener noreferrer" class={linkClass}>Lemon Squeezy orders</a>.
         </FaqItem>
       </div>
     </div>

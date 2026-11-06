@@ -1,6 +1,6 @@
 ---
 import { supportedAppGroups } from "../../data/supportedApps";
-import { macsPerPlan, lifetimeManageUrl } from "../../data/billing.mjs";
+import { billing, macsPerPlan, lifetimeManageUrl, trialDays } from "../../data/billing.mjs";
 import FaqItem from "./FaqItem.astro";
 ---
 <section aria-labelledby="faq-section" id="faq">  
@@ -64,8 +64,18 @@ import FaqItem from "./FaqItem.astro";
             </div>
           </div>
         </div>
-        <FaqItem question="I already have a lifetime license. Does it still work?">
-          Yes. Lifetime licenses are grandfathered in and will keep working indefinitely. You don't need to switch to a subscription. If you've lost your license key, you can find it in your <a href={lifetimeManageUrl} target="_blank" rel="noopener noreferrer" class="font-semibold text-accent-500 hover:text-black">Lemon Squeezy orders</a>.
+        <FaqItem question="Can I try TabTab before buying?">
+          Yes. Download TabTab and start a {trialDays}-day trial in the app. No card or account is required, and you won't be charged when it ends.
+        </FaqItem>
+        <FaqItem question="Do you offer a lifetime license?">
+          Yes. The Lifetime plan is a one-time purchase for up to {macsPerPlan} Macs, including future updates. Monthly and Annual plans are also available. <a href="/pricing/" class="font-semibold text-accent-500 hover:text-black">See plans and pricing</a>.
+        </FaqItem>
+        <FaqItem question="Does my older lifetime license still work?">
+          Yes. Lifetime licenses bought through Lemon Squeezy keep working with their original device allowance. You don't need to buy again or switch to a subscription. Find your key in your <a href={lifetimeManageUrl} target="_blank" rel="noopener noreferrer" class="font-semibold text-accent-500 hover:text-black">Lemon Squeezy orders</a>.
+        </FaqItem>
+        <FaqItem question="Where do I find and activate my license key?">
+          {billing.portalUrl && <Fragment>For purchases through Polar, find your key in the <a href={billing.portalUrl} target="_blank" rel="noopener noreferrer" class="font-semibold text-accent-500 hover:text-black">customer portal</a> using your purchase email.</Fragment>}
+          {" "}Paste it into Settings → License in TabTab and click Activate. For older Lemon Squeezy purchases, use your <a href={lifetimeManageUrl} target="_blank" rel="noopener noreferrer" class="font-semibold text-accent-500 hover:text-black">Lemon Squeezy orders</a>.
         </FaqItem>
         <FaqItem question="What about refunds?">
           For billing questions, including refunds, email <strong><em><span class="protected-email">hello@tabtabapp.net</span></em></strong>. If a subscription payment is fully refunded, the subscription is cancelled and access ends.
@@ -103,12 +113,12 @@ import FaqItem from "./FaqItem.astro";
             style="display: none;"
           >
             <div class="p-4 pt-2 text-zinc-500">
-              Privacy is essential for an app that is part of your daily workflow. TabTab does not collect personally identifiable information. Window and tab data is processed locally on your Mac, while anonymous usage analytics from TelemetryDeck help monitor app performance and guide updates. See the <a href="/privacy/" class="font-semibold text-accent-500 hover:text-black">Privacy Policy</a> for details.
+              Window and tab data stays on your Mac. TabTab uses TelemetryDeck for anonymized usage analytics. License verification sends your key, activation identifier and device label to Polar, or to Lemon Squeezy for older licenses. See the <a href="/privacy/" class="font-semibold text-accent-500 hover:text-black">Privacy Policy</a> for details.
             </div>
           </div>
         </div>
         <FaqItem question="How many Macs can I use?">
-          Every paid plan covers up to {macsPerPlan} Macs. Lifetime licenses bought before these plans keep the number of devices they were sold with.
+          Current plans and existing Polar licenses cover up to {macsPerPlan} Macs. Older Lemon Squeezy lifetime licenses keep their original device allowance.
         </FaqItem>
         <div
           x-data="{ id: $id('accordion') }"
@@ -233,8 +243,8 @@ import FaqItem from "./FaqItem.astro";
 <script>
   // Email protection against spam bots
   function createEmailLink() {
-    const user = 'riccqi';
-    const domain = 'pm.me';
+    const user = 'hello';
+    const domain = 'tabtabapp.net';
     const email = user + '@' + domain;
     return 'mailto:' + email;
   }
