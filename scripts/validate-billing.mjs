@@ -43,7 +43,12 @@ const checks = [
       assert.throws(() => billingConfig({ TABTAB_SUBSCRIPTION_ROLLOUT: "on", ...allLinks, [missing]: "" }), new RegExp(missing));
     }
     const config = billingConfig({ TABTAB_SUBSCRIPTION_ROLLOUT: "on", ...allLinks });
-    assert.equal(config.checkout.annual, link("Annual123"));
+    for (const plan of plans) {
+      const url = new URL(config.checkout[plan.id]);
+      assert.equal(url.searchParams.get("custom_field_data.tabtab-email-updates-v1"), "true");
+      url.search = "";
+      assert.equal(url.href, allLinks[plan.checkoutEnv]);
+    }
     assert.equal(config.noindex, false);
   }],
   ["the retired checkout variable alone cannot launch the site", () => {
@@ -60,7 +65,7 @@ const checks = [
   ["checkout links must be persistent production Polar checkout links", () => {
     assert.equal(checkoutUrl(undefined), null);
     assert.equal(checkoutUrl("  "), null);
-    assert.equal(checkoutUrl(" https://api.polar.sh/v1/checkout-links/polar_cl_Example123/redirect "), "https://api.polar.sh/v1/checkout-links/polar_cl_Example123/redirect");
+    assert.equal(checkoutUrl(" https://api.polar.sh/v1/checkout-links/polar_cl_Example123/redirect "), "https://api.polar.sh/v1/checkout-links/polar_cl_Example123/redirect?custom_field_data.tabtab-email-updates-v1=true");
     for (const bad of [
       // Checkout sessions are short-lived and must never be published.
       "https://polar.sh/checkout/polar_c_Example123",

@@ -101,6 +101,8 @@ export function checkoutUrl(value, label = "Checkout URL") {
   if (url.pathname.includes(RETIRED_TRIAL_CHECKOUT)) {
     throw new Error(`${label} is the retired Polar trial checkout; use the plan's new checkout.`);
   }
+  // Polar prefills this editable checkbox for each new checkout session.
+  url.searchParams.set("custom_field_data.tabtab-email-updates-v1", "true");
   return url.href;
 }
 
