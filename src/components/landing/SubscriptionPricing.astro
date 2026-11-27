@@ -35,7 +35,7 @@ const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 tex
           Choose your plan
         </h1>
 
-        <div x-show="sale" style="display: none" class="mt-6 rounded-xl bg-gray-900 p-4 text-white">
+        <div x-show="sale" style="display: none" class="mt-6 rounded-xl black-friday-gradient p-4 text-white">
           <p class="text-base font-bold">Black Friday 2026</p>
           <p class="mt-1 text-base"><strong class="font-bold">30% off every plan.</strong> Discount applied automatically with BF30. Ends December 4.</p>
         </div>
@@ -84,7 +84,8 @@ const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 tex
           <div>
             {plans.map(plan => billing.checkout[plan.id] ? (
               <a
-                class:list={[buttonBase, "text-white bg-black border border-black hover:bg-accent-600 hover:border-accent-600"]}
+                class:list={[buttonBase, "text-white bg-black border border-transparent hover:brightness-125"]}
+                x-bind:class="{ 'black-friday-gradient': sale }"
                 href={billing.checkout[plan.id]}
                 x-bind:href={`sale ? ${JSON.stringify(saleCheckoutUrl(billing.checkout[plan.id]))} : ${JSON.stringify(billing.checkout[plan.id])}`}
                 target="_blank"
@@ -122,3 +123,10 @@ const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 tex
     </div>
   </div>
 </section>
+
+<style>
+  .black-friday-gradient {
+    background-color: #111827;
+    background-image: linear-gradient(135deg, #2b3748, #111827);
+  }
+</style>
