@@ -4,6 +4,8 @@ import CheckIcon from "../CheckIcon.astro";
 import ReviewWall from "../global/ReviewWall.astro";
 import { annualSavingPercent, billing, defaultPlanId, macsPerPlan, plans } from "../../data/billing.mjs";
 
+import { promotion, salePrice, saleCheckoutUrl } from "../../data/black-friday.mjs";
+
 const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 text-center font-medium transition duration-200 ease-in-out rounded-button focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black";
 ---
 <section aria-labelledby="pricing-section" id="pricing">
@@ -18,7 +20,11 @@ const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 tex
     <div class="flex justify-center lg:block">
       <section
         aria-label="TabTab plans"
-        x-data={`{ plan: '${defaultPlanId}' }`}
+        x-data={`{ plan: '${defaultPlanId}', now: Date.now(), timer: null,
+          init() { this.timer = setInterval(() => this.now = Date.now(), 1000) },
+          destroy() { clearInterval(this.timer) },
+          get sale() { return this.now >= ${promotion.startsAt} && this.now < ${promotion.endsAt} }
+        }`}
         class="flex flex-col w-full max-w-md lg:max-w-lg p-6 md:p-10 rounded-panel border border-gray-200 bg-white"
       >
         <div class="self-start bg-gradient-to-br from-sky-200 to-sky-400 rounded-2xl p-4">
@@ -28,6 +34,12 @@ const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 tex
         <h1 id="pricing-section" class="mt-6 text-4xl tracking-tight font-medium text-black md:text-5xl font-display">
           Choose your plan
         </h1>
+
+        <div x-show="sale" style="display: none" class="mt-6 rounded-xl bg-sky-50 p-4 text-sky-900">
+          <p class="font-semibold">Black Friday: 30% off every plan</p>
+          <p class="mt-1 text-sm">Discount applied automatically with BF30. First payment only.</p>
+          <p class="mt-1 text-xs">Ends December 4, 2026 at 23:04 GMT+8.</p>
+        </div>
 
         <fieldset class="mt-8">
           <legend class="sr-only">Billing option</legend>
@@ -54,13 +66,17 @@ const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 tex
           {plans.map(plan => (
             <div x-show={`plan === '${plan.id}'`} style={plan.id === defaultPlanId ? undefined : "display: none"}>
               <p class="flex flex-wrap items-baseline gap-x-2 gap-y-1 font-display">
-                <span class="text-3xl font-semibold tracking-tight text-black">${plan.price}</span>
-                <span class="text-lg text-gray-600">{plan.unit}</span>
+                <del x-show="sale" style="display: none" class="text-xl text-gray-400">${plan.price}</del>
+                <span x-show="!sale" class="text-3xl font-semibold tracking-tight text-black">${plan.price}</span>
+                <span x-show="sale" style="display: none" class="text-3xl font-semibold tracking-tight text-black">${salePrice(plan.price)}</span>
+                <span x-show="!sale" class="text-lg text-gray-600">{plan.unit}</span>
+                <span x-show="sale" style="display: none" class="text-lg text-gray-600">{plan.id === "monthly" ? "first month" : plan.id === "annual" ? "first year" : "once"}</span>
                 {plan.id === "annual" && (
-                  <span class="self-center rounded-full bg-sky-100 px-2.5 py-0.5 text-sm font-medium text-sky-800">Saves about {annualSavingPercent}% vs monthly</span>
+                  <span x-show="!sale" class="self-center rounded-full bg-sky-100 px-2.5 py-0.5 text-sm font-medium text-sky-800">Saves about {annualSavingPercent}% vs monthly</span>
                 )}
               </p>
-              <p class="mt-2 text-sm leading-6 text-gray-500">{plan.detail}</p>
+              <p x-show="!sale" class="mt-2 text-sm leading-6 text-gray-500">{plan.detail}</p>
+              <p x-show="sale" style="display: none" class="mt-2 text-sm leading-6 text-gray-500">{plan.id === "lifetime" ? plan.detail : `Then $${plan.price}${plan.unit}. Renews until you cancel.`}</p>
             </div>
           ))}
         </div>
@@ -71,6 +87,7 @@ const buttonBase = "inline-flex items-center justify-center w-full h-12 px-4 tex
               <a
                 class:list={[buttonBase, "text-white bg-black border border-black hover:bg-accent-600 hover:border-accent-600"]}
                 href={billing.checkout[plan.id]}
+                x-bind:href={`sale ? ${JSON.stringify(saleCheckoutUrl(billing.checkout[plan.id]))} : ${JSON.stringify(billing.checkout[plan.id])}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 x-show={`plan === '${plan.id}'`}
